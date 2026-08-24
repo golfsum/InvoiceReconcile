@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "incremental": false
+  },
+  "include": [
+    "../../src/lib/admin/**/*.ts",
+    "../../src/components/admin/**/*.tsx",
+    "../setup.ts",
+    "./**/*.ts",
+    "./**/*.tsx"
+  ],
+  "exclude": ["../../node_modules", "../../.next"]
+}

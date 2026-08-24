@@ -1,0 +1,31 @@
+Invoice Number,Customer Name,Customer ID,Invoice Date,Due Date,Original Amount,Outstanding Balance,Currency,Status,PO / Reference,Memo
+NS-2026-1001,Atlas Office Design,CUST-001,2026-06-02,2026-07-02,"$1,250.00","$1,250.00",USD,Open,PO-4401,Workspace planning retainer
+NS-2026-1002,Blue Canyon HVAC,CUST-002,2026-06-03,2026-07-03,$875.50,$875.50,USD,Open,BC-778,Preventive maintenance
+NS-2026-1003,Cedar Ridge Dental,CUST-003,2026-06-04,2026-07-04,"$2,400.00","$2,400.00",USD,Open,CRD-JUN,Network support
+NS-2026-1004,Desert Bloom Marketing LLC,CUST-004,2026-06-05,2026-07-05,"$1,500.00","$1,500.00",USD,Open,DBM-601,Campaign reporting
+NS-2026-1005,Desert Bloom Marketing LLC,CUST-004,2026-06-12,2026-07-12,"$1,225.00","$1,225.00",USD,Open,DBM-602,Website maintenance
+NS-2026-1006,Desert Bloom Marketing LLC,CUST-004,2026-06-19,2026-07-19,"$2,000.00","$2,000.00",USD,Open,DBM-603,Analytics implementation
+NS-2026-1007,Copper State Legal LLP,CUST-005,2026-06-08,2026-07-08,"$5,000.00","$5,000.00",USD,Open,CSL-220,Records migration
+NS-2026-1008,Red Mesa Logistics Inc,CUST-006,2026-06-09,2026-07-09,"$3,600.00","$3,600.00",USD,Open,RML-914,Dispatch system support
+NS-2026-1009,Suncrest Architecture PLLC,CUST-007,2026-06-10,2026-07-10,"$5,000.00","$5,000.00",USD,Open,SA-118,Document management setup
+NS-2026-1010,Harborlight Consulting LLC,CUST-008,2026-06-11,2026-07-11,"$10,000.00","$10,000.00",USD,Open,HC-2026-4,Quarterly services agreement
+NS-2026-1011,Juniper Data Systems,CUST-009,2026-06-13,2026-07-13,$750.00,$750.00,USD,Open,JDS-77,Data cleanup
+NS-2026-1012,Summit Field Services,CUST-010,2026-06-14,2026-07-14,"$1,875.00","$1,875.00",USD,Open,SFS-332,Mobile workflow configuration
+NS-2026-1013,Willow Creek Events,CUST-011,2026-06-15,2026-07-15,"$3,200.00","$3,200.00",USD,Open,WCE-SUMMER,Registration system services
+NS-2026-1014,Horizon Print Works,CUST-012,2026-06-16,2026-07-16,$640.00,$640.00,USD,Open,HPW-91,Print server maintenance
+NS-2026-1015,Stonegate Advisory Group,CUST-013,2026-06-17,2026-07-17,"$2,250.00","$2,250.00",USD,Open,SAG-402,Reporting automation
+NS-2026-1016,North Rim Landscaping LLC,CUST-014,2026-06-18,2026-07-18,"$1,425.00","$1,425.00",USD,Open,NRL-614,Scheduling support
+NS-2026-1017,Mesa Verde Laboratories,CUST-015,2026-06-20,2026-07-20,"$6,800.00","$6,800.00",USD,Open,MVL-820,Lab systems integration
+NS-2026-1018,Ocotillo Creative Studio,CUST-016,2026-06-21,2026-07-21,$975.00,$975.00,USD,Open,OCS-144,Asset library migration
+NS-2026-1019,Sonoran Safety Partners,CUST-017,2026-06-22,2026-07-22,"$1,180.00","$1,180.00",USD,Open,SSP-55,Compliance portal support
+NS-2026-1020,Pinnacle Fabrication Co,CUST-018,2026-06-23,2026-07-23,"$4,500.00","$4,500.00",USD,Open,PF-620,Production dashboard
+NS-2026-1021,Gray Fox Engineering,CUST-019,2026-06-24,2026-07-24,"$2,750.00","$2,750.00",USD,Open,GFE-24A,Project controls setup
+NS-2026-1022,Ironwood Training Center,CUST-020,2026-06-25,2026-07-25,$890.00,$890.00,USD,Open,ITC-810,Learning portal maintenance
+NS-2026-1023,Clearview Janitorial Services,CUST-021,2026-06-26,2026-07-26,"$1,300.00","$1,300.00",USD,Open,CJS-2026-6,Route optimization support
+NS-2026-1024,Canyon Trail Supply,CUST-022,2026-06-27,2026-07-27,"$2,100.00","$2,100.00",USD,Open,CTS-884,Inventory export setup
+NS-2026-1025,Lakeview Research Group,CUST-023,2026-06-28,2026-07-28,"$3,350.00","$3,350.00",USD,Open,LRG-62,Survey data processing
+NS-2026-1026,Cobalt Mechanical Services,CUST-024,2026-06-29,2026-07-29,"$7,600.00","$7,600.00",USD,Open,CMS-719,Field operations integration
+NS-2026-1027,Evergreen Fleet Care,CUST-025,2026-06-30,2026-07-30,"$1,650.00","$1,650.00",USD,Open,EFC-300,Fleet reporting support
+NS-2026-1028,Silverline Telecom Partners,CUST-026,2026-07-01,2026-07-31,"$4,200.00","$4,200.00",USD,Open,STP-711,Service desk implementation
+NS-2026-1029,Wildflower Staffing Solutions,CUST-027,2026-07-02,2026-08-01,"$1,950.00","$1,950.00",USD,Open,WSS-702,Placement reporting
+NS-2026-1030,Four Peaks Property Care,CUST-028,2026-07-03,2026-08-02,"$2,325.00","$2,325.00",USD,Open,FPPC-73,Work order migration

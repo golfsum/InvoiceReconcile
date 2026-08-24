@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f7f7f4;
+  --foreground: #17201d;
+  --surface: #ffffff;
+  --surface-muted: #f0f2ee;
+  --surface-raised: #ffffff;
+  --border: #d8ddd8;
+  --border-strong: #b7c0b9;
+  --muted: #5f6c66;
+  --muted-strong: #44514b;
+  --brand: #176b4d;
+  --brand-hover: #10583f;
+  --brand-soft: #e7f3ed;
+  --success: #16734f;
+  --success-soft: #e6f4ed;
+  --warning: #9a5b12;
+  --warning-soft: #fff2d7;
+  --danger: #a33732;
+  --danger-soft: #fbe9e7;
+  --info: #315d82;
+  --info-soft: #e7f0f7;
+  --focus: #2e7d60;
+  --shadow: 0 1px 2px rgb(19 34 28 / 5%), 0 8px 30px rgb(19 34 28 / 5%);
+}
+
+.dark {
+  --background: #111514;
+  --foreground: #edf1ee;
+  --surface: #171d1b;
+  --surface-muted: #1d2522;
+  --surface-raised: #202824;
+  --border: #303b36;
+  --border-strong: #47544e;
+  --muted: #a4b0aa;
+  --muted-strong: #c5cdc8;
+  --brand: #6fc79f;
+  --brand-hover: #8ed8b5;
+  --brand-soft: #173d2e;
+  --success: #73cba3;
+  --success-soft: #173d2e;
+  --warning: #e8b05f;
+  --warning-soft: #3b2d19;
+  --danger: #ee8f89;
+  --danger-soft: #402423;
+  --info: #8eb9db;
+  --info-soft: #1d3242;
+  --focus: #78cba6;
+  --shadow: 0 1px 2px rgb(0 0 0 / 30%), 0 10px 34px rgb(0 0 0 / 18%);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-raised: var(--surface-raised);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-muted: var(--muted);
+  --color-muted-strong: var(--muted-strong);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-soft: var(--brand-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --shadow-panel: var(--shadow);
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+::selection {
+  background: var(--brand-soft);
+  color: var(--foreground);
+}
+
+:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--focus) 55%, transparent);
+  outline-offset: 2px;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+table,
+.numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+.page-shell {
+  width: min(1180px, calc(100% - 40px));
+  margin-inline: auto;
+}
+
+.app-shell {
+  width: min(1500px, calc(100% - 32px));
+  margin-inline: auto;
+}
+
+.eyebrow {
+  color: var(--brand);
+  font-size: 0.75rem;
+  font-weight: 720;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.hairline-grid {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='42' height='42' viewBox='0 0 42 42'%3E%3Cpath d='M41.5 0v42M0 41.5h42' fill='none' stroke='%23cbd2cd' stroke-opacity='.55'/%3E%3C/svg%3E");
+  background-size: 42px 42px;
+}
+
+@media (max-width: 640px) {
+  .page-shell,
+  .app-shell {
+    width: min(100% - 28px, 1180px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
