@@ -4,12 +4,14 @@ const redirect = vi.hoisted(() => vi.fn());
 const requireUser = vi.hoisted(() => vi.fn());
 const getSupabaseServerClient = vi.hoisted(() => vi.fn());
 const getSupabaseServiceClient = vi.hoisted(() => vi.fn());
+const loggerWarn = vi.hoisted(() => vi.fn());
 
 vi.mock("server-only", () => ({}));
 vi.mock("next/navigation", () => ({ redirect }));
 vi.mock("@/lib/auth/access", () => ({ requireUser }));
 vi.mock("@/lib/supabase/server", () => ({ getSupabaseServerClient }));
 vi.mock("@/lib/supabase/service", () => ({ getSupabaseServiceClient }));
+vi.mock("@/lib/logger", () => ({ logger: { warn: loggerWarn } }));
 
 function signupForm(plan: string) {
   const form = new FormData();
@@ -44,6 +46,50 @@ beforeEach(() => {
 });
 
 describe("paid plan signup handoff", () => {
+  it("explains an unconfirmed email and logs only safe rejection metadata", async () => {
+    const signInWithPassword = vi.fn().mockResolvedValue({
+      data: { user: null },
+      error: { code: "email_not_confirmed", message: "Email not confirmed", status: 400 },
+    });
+    getSupabaseServerClient.mockResolvedValue({ auth: { signInWithPassword } });
+    const { signInAction } = await import("@/app/auth/actions");
+    const form = new FormData();
+    form.set("email", "owner@example.com");
+    form.set("password", "long-password");
+
+    await expect(signInAction({}, form)).resolves.toEqual({
+      error: "Confirm your email before signing in. Use “Send a new one” below if the first confirmation link did not work.",
+    });
+    expect(loggerWarn).toHaveBeenCalledWith({
+      operation: "sign_in",
+      code: "email_not_confirmed",
+      status: 400,
+    }, "Supabase auth request rejected");
+    expect(JSON.stringify(loggerWarn.mock.calls)).not.toContain("owner@example.com");
+    expect(JSON.stringify(loggerWarn.mock.calls)).not.toContain("long-password");
+  });
+
+  it("keeps invalid credentials generic while recording the safe Supabase code", async () => {
+    const signInWithPassword = vi.fn().mockResolvedValue({
+      data: { user: null },
+      error: { code: "invalid_credentials", message: "Invalid login credentials", status: 400 },
+    });
+    getSupabaseServerClient.mockResolvedValue({ auth: { signInWithPassword } });
+    const { signInAction } = await import("@/app/auth/actions");
+    const form = new FormData();
+    form.set("email", "unknown@example.com");
+    form.set("password", "long-password");
+
+    await expect(signInAction({}, form)).resolves.toEqual({
+      error: "We could not sign you in with those details. Check your email and password.",
+    });
+    expect(loggerWarn).toHaveBeenCalledWith({
+      operation: "sign_in",
+      code: "invalid_credentials",
+      status: 400,
+    }, "Supabase auth request rejected");
+  });
+
   it("stores and carries an allowlisted plan through email verification", async () => {
     const signUp = vi.fn().mockResolvedValue({ data: { session: {}, user: null }, error: null });
     getSupabaseServerClient.mockResolvedValue({ auth: { signUp } });

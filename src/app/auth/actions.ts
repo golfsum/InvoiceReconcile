@@ -10,6 +10,7 @@ import { getSupabaseServiceClient } from "@/lib/supabase/service";
 import { safeReturnPath } from "@/lib/utils";
 import { paidPlanSchema } from "@/lib/billing/catalog";
 import { onboardingPathForPlan } from "@/lib/billing/intent";
+import { logger } from "@/lib/logger";
 
 export type AuthState = { error?: string; message?: string };
 
@@ -30,13 +31,30 @@ function authCallbackUrl(nextPath: string) {
   return callbackUrl.toString();
 }
 
+function logAuthRejection(operation: string, error: { code?: string; status?: number }) {
+  logger.warn({
+    operation,
+    code: error.code || "unknown",
+    status: error.status || null,
+  }, "Supabase auth request rejected");
+}
+
 export async function signInAction(_state: AuthState, formData: FormData): Promise<AuthState> {
   const parsed = credentialsSchema.safeParse({ email: formData.get("email"), password: formData.get("password") });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message || "Check your sign-in details." };
   const supabase = await getSupabaseServerClient();
   if (!supabase) return { error: "Account sign-in is not configured in this environment. Use the sample workspace instead." };
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
-  if (error) return { error: "We could not sign you in with those details. Check your email and password." };
+  if (error) {
+    logAuthRejection("sign_in", error);
+    if (error.code === "email_not_confirmed") {
+      return { error: "Confirm your email before signing in. Use “Send a new one” below if the first confirmation link did not work." };
+    }
+    if (error.code === "over_request_rate_limit") {
+      return { error: "Too many sign-in attempts. Wait a few minutes and try again." };
+    }
+    return { error: "We could not sign you in with those details. Check your email and password." };
+  }
   if (data.user) {
     await supabase.from("profiles").update({ last_seen_at: new Date().toISOString() }).eq("id", data.user.id);
   }
@@ -75,7 +93,10 @@ export async function signUpAction(_state: AuthState, formData: FormData): Promi
       },
     },
   });
-  if (error) return { error: error.message.includes("registered") ? "An account already uses this email. Sign in instead." : "We could not create the account. Try again or contact support." };
+  if (error) {
+    logAuthRejection("sign_up", error);
+    return { error: error.message.includes("registered") ? "An account already uses this email. Sign in instead." : "We could not create the account. Try again or contact support." };
+  }
   if (!data.session) return { message: "Check your email to verify the account, then return to sign in." };
   if (data.user) {
     const serviceClient = getSupabaseServiceClient();
@@ -99,11 +120,12 @@ export async function resendConfirmationAction(_state: AuthState, formData: Form
   const supabase = await getSupabaseServerClient();
   if (!supabase) return { error: "Account confirmation is not configured in this environment." };
   const returnPath = safeReturnPath(formData.get("returnTo")?.toString() || null, "/onboarding");
-  await supabase.auth.resend({
+  const { error } = await supabase.auth.resend({
     type: "signup",
     email: email.data,
     options: { emailRedirectTo: authCallbackUrl(returnPath) },
   });
+  if (error) logAuthRejection("resend_confirmation", error);
   return { message: "If that account still needs verification, a new confirmation email is on its way." };
 }
 
@@ -112,9 +134,10 @@ export async function requestPasswordResetAction(_state: AuthState, formData: Fo
   if (!email.success) return { error: email.error.issues[0]?.message };
   const supabase = await getSupabaseServerClient();
   if (!supabase) return { error: "Password reset is not configured in this environment." };
-  await supabase.auth.resetPasswordForEmail(email.data, {
+  const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
     redirectTo: authCallbackUrl("/auth/reset-password"),
   });
+  if (error) logAuthRejection("request_password_reset", error);
   return { message: "If an account exists for that email, a reset link is on its way." };
 }
 
