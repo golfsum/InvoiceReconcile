@@ -24,6 +24,12 @@ const optionalPaidPlanSchema = z.preprocess(
   paidPlanSchema.optional(),
 );
 
+function authCallbackUrl(nextPath: string) {
+  const callbackUrl = new URL("/auth/callback", siteConfig.url);
+  callbackUrl.searchParams.set("next", nextPath);
+  return callbackUrl.toString();
+}
+
 export async function signInAction(_state: AuthState, formData: FormData): Promise<AuthState> {
   const parsed = credentialsSchema.safeParse({ email: formData.get("email"), password: formData.get("password") });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message || "Check your sign-in details." };
@@ -60,7 +66,7 @@ export async function signUpAction(_state: AuthState, formData: FormData): Promi
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
-      emailRedirectTo: `${siteConfig.url}/auth/callback?next=${encodeURIComponent(returnPath)}`,
+      emailRedirectTo: authCallbackUrl(returnPath),
       data: {
         full_name: parsed.data.fullName,
         business_name: parsed.data.businessName,
@@ -87,13 +93,27 @@ export async function signUpAction(_state: AuthState, formData: FormData): Promi
   redirect(returnPath);
 }
 
+export async function resendConfirmationAction(_state: AuthState, formData: FormData): Promise<AuthState> {
+  const email = z.string().trim().email("Enter a valid email.").safeParse(formData.get("email"));
+  if (!email.success) return { error: email.error.issues[0]?.message };
+  const supabase = await getSupabaseServerClient();
+  if (!supabase) return { error: "Account confirmation is not configured in this environment." };
+  const returnPath = safeReturnPath(formData.get("returnTo")?.toString() || null, "/onboarding");
+  await supabase.auth.resend({
+    type: "signup",
+    email: email.data,
+    options: { emailRedirectTo: authCallbackUrl(returnPath) },
+  });
+  return { message: "If that account still needs verification, a new confirmation email is on its way." };
+}
+
 export async function requestPasswordResetAction(_state: AuthState, formData: FormData): Promise<AuthState> {
   const email = z.string().trim().email("Enter a valid email.").safeParse(formData.get("email"));
   if (!email.success) return { error: email.error.issues[0]?.message };
   const supabase = await getSupabaseServerClient();
   if (!supabase) return { error: "Password reset is not configured in this environment." };
   await supabase.auth.resetPasswordForEmail(email.data, {
-    redirectTo: `${siteConfig.url}/auth/callback?next=${encodeURIComponent("/auth/reset-password")}`,
+    redirectTo: authCallbackUrl("/auth/reset-password"),
   });
   return { message: "If an account exists for that email, a reset link is on its way." };
 }

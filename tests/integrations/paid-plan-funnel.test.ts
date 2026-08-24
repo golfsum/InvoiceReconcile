@@ -87,6 +87,26 @@ describe("paid plan signup handoff", () => {
     }));
   });
 
+  it("resends signup confirmation to the exact production callback without revealing account state", async () => {
+    const resend = vi.fn().mockResolvedValue({ data: {}, error: new Error("Account is already confirmed") });
+    getSupabaseServerClient.mockResolvedValue({ auth: { resend } });
+    const { resendConfirmationAction } = await import("@/app/auth/actions");
+    const form = new FormData();
+    form.set("email", "owner@example.com");
+    form.set("returnTo", "/onboarding?plan=business");
+
+    await expect(resendConfirmationAction({}, form)).resolves.toEqual({
+      message: "If that account still needs verification, a new confirmation email is on its way.",
+    });
+    expect(resend).toHaveBeenCalledWith({
+      type: "signup",
+      email: "owner@example.com",
+      options: {
+        emailRedirectTo: "https://invoicereconcile.com/auth/callback?next=%2Fonboarding%3Fplan%3Dbusiness",
+      },
+    });
+  });
+
   it("routes a new workspace to the selected organization checkout flow", async () => {
     const organizationId = "e73c62fe-7cc0-4dd6-a9ce-123853a9e5e0";
     const workspaceId = "11000000-0000-4000-8000-000000000001";

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useActionState, useEffect, useRef } from "react";
 import { useFormStatus } from "react-dom";
 import { AlertCircle, ArrowRight, LoaderCircle } from "lucide-react";
-import { requestPasswordResetAction, signInAction, signUpAction, updatePasswordAction, type AuthState } from "@/app/auth/actions";
+import { requestPasswordResetAction, resendConfirmationAction, signInAction, signUpAction, updatePasswordAction, type AuthState } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
 import { sendAnalyticsEvent } from "@/components/analytics/analytics-provider";
 import { readAnalyticsAttribution } from "@/lib/analytics/client";
@@ -36,7 +36,10 @@ export function SignInForm({ returnTo = "/app" }: { returnTo?: string }) {
         <SubmitButton label="Sign in" />
       </form>
       <DemoEntry />
-      <p className="text-center text-sm text-muted">New to InvoiceReconcile? <Link className="font-semibold text-foreground hover:underline" href={returnTo === "/app" ? "/auth/sign-up" : `/auth/sign-up?returnTo=${encodeURIComponent(returnTo)}${returnTo === "/auth/accept-invite" ? "&source=referral" : ""}`}>Create an account</Link></p>
+      <div className="space-y-2 text-center text-sm text-muted">
+        <p>New to InvoiceReconcile? <Link className="font-semibold text-foreground hover:underline" href={returnTo === "/app" ? "/auth/sign-up" : `/auth/sign-up?returnTo=${encodeURIComponent(returnTo)}${returnTo === "/auth/accept-invite" ? "&source=referral" : ""}`}>Create an account</Link></p>
+        <p>Confirmation link expired or opened the wrong site? <Link className="font-semibold text-foreground hover:underline" href={`/auth/resend-confirmation?returnTo=${encodeURIComponent(returnTo === "/app" ? "/onboarding" : returnTo)}`}>Send a new one</Link></p>
+      </div>
     </div>
   );
 }
@@ -82,6 +85,11 @@ function DemoEntry() {
 export function ForgotPasswordForm() {
   const [state, action] = useActionState(requestPasswordResetAction, {});
   return <form action={action} className="space-y-4"><label className="block text-sm font-semibold">Account email<input className={inputClass} type="email" name="email" autoComplete="email" required /></label><Feedback state={state} /><SubmitButton label="Send reset link" /><p className="text-center text-sm text-muted"><Link className="font-semibold text-foreground hover:underline" href="/auth/sign-in">Return to sign in</Link></p></form>;
+}
+
+export function ResendConfirmationForm({ returnTo = "/onboarding" }: { returnTo?: string }) {
+  const [state, action] = useActionState(resendConfirmationAction, {});
+  return <form action={action} className="space-y-4"><input type="hidden" name="returnTo" value={returnTo} /><label className="block text-sm font-semibold">Account email<input className={inputClass} type="email" name="email" autoComplete="email" required /></label><Feedback state={state} /><SubmitButton label="Send new confirmation" /><p className="text-center text-sm text-muted"><Link className="font-semibold text-foreground hover:underline" href={`/auth/sign-in?returnTo=${encodeURIComponent(returnTo === "/onboarding" ? "/app" : returnTo)}`}>Return to sign in</Link></p></form>;
 }
 
 export function ResetPasswordForm() {
