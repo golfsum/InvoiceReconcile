@@ -64,7 +64,7 @@ describe("paid plan signup handoff", () => {
       operation: "sign_in",
       code: "email_not_confirmed",
       status: 400,
-    }, "Supabase auth request rejected");
+    }, "Supabase auth request failed");
     expect(JSON.stringify(loggerWarn.mock.calls)).not.toContain("owner@example.com");
     expect(JSON.stringify(loggerWarn.mock.calls)).not.toContain("long-password");
   });
@@ -87,7 +87,28 @@ describe("paid plan signup handoff", () => {
       operation: "sign_in",
       code: "invalid_credentials",
       status: 400,
-    }, "Supabase auth request rejected");
+    }, "Supabase auth request failed");
+  });
+
+  it("reports an unreachable auth service instead of blaming the credentials", async () => {
+    const signInWithPassword = vi.fn().mockResolvedValue({
+      data: { user: null },
+      error: { name: "AuthRetryableFetchError", message: "fetch failed", status: 0 },
+    });
+    getSupabaseServerClient.mockResolvedValue({ auth: { signInWithPassword } });
+    const { signInAction } = await import("@/app/auth/actions");
+    const form = new FormData();
+    form.set("email", "owner@example.com");
+    form.set("password", "long-password");
+
+    await expect(signInAction({}, form)).resolves.toEqual({
+      error: "Sign-in is temporarily unavailable. Try again shortly or contact support.",
+    });
+    expect(loggerWarn).toHaveBeenCalledWith({
+      operation: "sign_in",
+      code: "AuthRetryableFetchError",
+      status: 0,
+    }, "Supabase auth request failed");
   });
 
   it("stores and carries an allowlisted plan through email verification", async () => {
@@ -104,6 +125,34 @@ describe("paid plan signup handoff", () => {
         data: expect.objectContaining({ selected_plan: "business" }),
       }),
     }));
+  });
+
+  it("routes an email-confirmation signup to a dedicated success page", async () => {
+    const signUp = vi.fn().mockResolvedValue({ data: { session: null, user: { id: "user-1" } }, error: null });
+    getSupabaseServerClient.mockResolvedValue({ auth: { signUp } });
+    const { signUpAction } = await import("@/app/auth/actions");
+
+    await expect(signUpAction({}, signupForm("business"))).rejects.toThrow(
+      "redirect:/auth/account-created?returnTo=%2Fonboarding%3Fplan%3Dbusiness&delivery=sent",
+    );
+  });
+
+  it("treats a confirmation email rate limit as an account-created delivery delay", async () => {
+    const signUp = vi.fn().mockResolvedValue({
+      data: { session: null, user: { id: "user-1" } },
+      error: { code: "over_email_send_rate_limit", message: "Email rate limit exceeded", status: 429 },
+    });
+    getSupabaseServerClient.mockResolvedValue({ auth: { signUp } });
+    const { signUpAction } = await import("@/app/auth/actions");
+
+    await expect(signUpAction({}, signupForm(""))).rejects.toThrow(
+      "redirect:/auth/account-created?returnTo=%2Fonboarding&delivery=delayed",
+    );
+    expect(loggerWarn).toHaveBeenCalledWith({
+      operation: "sign_up",
+      code: "over_email_send_rate_limit",
+      status: 429,
+    }, "Supabase auth request failed");
   });
 
   it("rejects a tampered plan before creating an account", async () => {

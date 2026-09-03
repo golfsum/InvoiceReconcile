@@ -19,7 +19,6 @@ test("fictional invoice and payment files reconcile into the review queue", asyn
   const invoicePreview = await invoicePreviewResponse;
   expect(invoicePreview.status(), await invoicePreview.text()).toBe(200);
   await expect(invoiceImport.getByText("30 data rows")).toBeVisible({ timeout: 10_000 });
-  await invoiceImport.getByRole("button", { name: "Confirm mapping" }).click();
   await expect(invoiceImport.getByRole("button", { name: "Mapping confirmed" })).toBeVisible();
 
   const paymentPreviewResponse = page.waitForResponse((response) =>
@@ -30,7 +29,6 @@ test("fictional invoice and payment files reconcile into the review queue", asyn
   const paymentPreview = await paymentPreviewResponse;
   expect(paymentPreview.status(), await paymentPreview.text()).toBe(200);
   await expect(paymentImport.getByText("22 data rows")).toBeVisible({ timeout: 10_000 });
-  await paymentImport.getByRole("button", { name: "Confirm mapping" }).click();
   await expect(paymentImport.getByRole("button", { name: "Mapping confirmed" })).toBeVisible();
 
   const runButton = page.getByRole("button", { name: "Run reconciliation" });

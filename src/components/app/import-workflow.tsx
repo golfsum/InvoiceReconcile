@@ -144,6 +144,10 @@ const fields: Record<ImportKind, Array<{ key: string; label: string; required?: 
   ],
 };
 
+function hasRequiredMapping(preview: Preview) {
+  return fields[preview.kind].every((field) => !field.required || Boolean(preview.mapping[field.key]));
+}
+
 export function ImportWorkflow({ workspaceId }: { workspaceId: string }) {
   const router = useRouter();
   const [previews, setPreviews] = useState<Partial<Record<ImportKind, Preview>>>({});
@@ -176,7 +180,7 @@ export function ImportWorkflow({ workspaceId }: { workspaceId: string }) {
     throw new Error("The source is still processing. You can leave this page and return from the in-app notification or an email update if enabled.");
   }
 
-  function applyAsyncPreview(kind: ImportKind, file: File, source: AsyncSourceStatus) {
+  function applyAsyncPreview(kind: ImportKind, file: File, source: AsyncSourceStatus, autoConfirm = false) {
     const preview: Preview = {
       file: { name: file.name, size: source.byteSize, fingerprint: source.sourceId },
       kind,
@@ -190,12 +194,19 @@ export function ImportWorkflow({ workspaceId }: { workspaceId: string }) {
       sheets: source.sheets,
       selectedSheet: source.selectedSheet,
     };
+    const sampleReady = autoConfirm && hasRequiredMapping(preview);
     setPreviews((current) => ({ ...current, [kind]: preview }));
-    setAccepted((current) => current.filter((item) => item !== kind));
-    toast.success(`${preview.rowCount} ${kind === "invoice" ? "invoice" : "payment"} rows are ready to map`);
+    setAccepted((current) => sampleReady
+      ? current.includes(kind) ? current : [...current, kind]
+      : current.filter((item) => item !== kind));
+    toast.success(sampleReady
+      ? `${labels[kind].title} sample ready`
+      : `${preview.rowCount} ${kind === "invoice" ? "invoice" : "payment"} rows are ready to map`, sampleReady
+      ? { description: "Required columns were detected and confirmed automatically." }
+      : undefined);
   }
 
-  async function previewLiveFile(kind: ImportKind, file: File) {
+  async function previewLiveFile(kind: ImportKind, file: File, autoConfirm = false) {
     const lowerName = file.name.toLowerCase();
     const sourceType = lowerName.endsWith(".xlsx") ? "xlsx" : lowerName.endsWith(".csv") ? "csv" : null;
     if (!sourceType) throw new Error("Use a CSV or XLSX file for this import.");
@@ -225,15 +236,15 @@ export function ImportWorkflow({ workspaceId }: { workspaceId: string }) {
     const finalized = await finalizeResponse.json() as { error?: string };
     if (!finalizeResponse.ok) throw new Error(finalized.error || "The private upload could not be finalized.");
     const source = await pollSource(kind, init.sourceId);
-    applyAsyncPreview(kind, file, source);
+    applyAsyncPreview(kind, file, source, autoConfirm);
   }
 
-  async function previewFile(kind: ImportKind, file: File, sheet?: string) {
+  async function previewFile(kind: ImportKind, file: File, sheet?: string, autoConfirm = false) {
     files.current[kind] = file;
     setLoading(kind);
     try {
       if (workspaceId !== "demo") {
-        await previewLiveFile(kind, file);
+        await previewLiveFile(kind, file, autoConfirm);
         return;
       }
       const body = new FormData();
@@ -244,9 +255,16 @@ export function ImportWorkflow({ workspaceId }: { workspaceId: string }) {
       const response = await fetch("/api/imports/preview", { method: "POST", body });
       const result = await response.json() as Preview & { error?: string };
       if (!response.ok) throw new Error(result.error || "The file could not be previewed.");
+      const sampleReady = autoConfirm && hasRequiredMapping(result);
       setPreviews((current) => ({ ...current, [kind]: result }));
-      setAccepted((current) => current.filter((item) => item !== kind));
-      toast.success(`${result.rowCount} ${kind === "invoice" ? "invoice" : "payment"} rows found`);
+      setAccepted((current) => sampleReady
+        ? current.includes(kind) ? current : [...current, kind]
+        : current.filter((item) => item !== kind));
+      toast.success(sampleReady
+        ? `${labels[kind].title} sample ready`
+        : `${result.rowCount} ${kind === "invoice" ? "invoice" : "payment"} rows found`, sampleReady
+        ? { description: "Required columns were detected and confirmed automatically." }
+        : undefined);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "The file could not be previewed.");
     } finally {
@@ -260,7 +278,7 @@ export function ImportWorkflow({ workspaceId }: { workspaceId: string }) {
       const response = await fetch(labels[kind].sample);
       if (!response.ok) throw new Error(`The fictional sample ${kind === "invoice" ? "invoices" : "payments"} could not be loaded.`);
       const blob = await response.blob();
-      await previewFile(kind, new File([blob], labels[kind].sample.split("/").pop() || `${kind}.csv`, { type: "text/csv" }));
+      await previewFile(kind, new File([blob], labels[kind].sample.split("/").pop() || `${kind}.csv`, { type: "text/csv" }), undefined, true);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "The fictional sample could not be loaded.");
     } finally {

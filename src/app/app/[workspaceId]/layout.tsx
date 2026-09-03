@@ -9,15 +9,16 @@ import { loadLatestReconciliationOverview } from "@/lib/reconciliation/large-run
 
 export default async function WorkspaceLayout({ children, params }: { children: React.ReactNode; params: Promise<{ workspaceId: string }> }) {
   const { workspaceId } = await params;
-  const user = await getCurrentUser({ allowPublicDemo: workspaceId === "demo" });
+  const isDemoWorkspace = workspaceId === "demo";
+  const user = await getCurrentUser({ allowPublicDemo: isDemoWorkspace });
   if (!user) redirect(`/auth/sign-in?returnTo=${encodeURIComponent(`/app/${workspaceId}`)}`);
   let workspaces: Array<{ id: string; name: string }> = demoClients.map((client) => ({ id: client.id, name: client.name }));
-  if (user.source === "supabase") {
+  if (!isDemoWorkspace && user.source === "supabase") {
     const supabase = await getSupabaseServerClient();
     const { data } = await supabase!.from("workspaces").select("id,name,business_name").eq("status", "active").order("name");
     workspaces = (data || []).map((workspace) => ({ id: String(workspace.id), name: String(workspace.business_name || workspace.name) }));
     if (!workspaces.some((workspace) => workspace.id === workspaceId)) redirect("/app/workspaces");
-  } else if (!workspaces.some((workspace) => workspace.id === workspaceId)) {
+  } else if (!isDemoWorkspace && !workspaces.some((workspace) => workspace.id === workspaceId)) {
     redirect("/app/demo");
   }
   let exceptionCount: number | null;
@@ -36,5 +37,5 @@ export default async function WorkspaceLayout({ children, params }: { children: 
     const latest = demo.status === "ready" ? demo.data : null;
     exceptionCount = demo.status === "unavailable" ? null : latest?.result.matches.filter((match) => !latest.decisions?.[match.id] && (match.confidence === "review" || match.confidence === "unmatched")).length || 0;
   }
-  return <Suspense fallback={<div className="min-h-screen bg-background" />}><WorkspaceShell workspaceId={workspaceId} userName={user.name} isDemo={user.source === "demo"} exceptionCount={exceptionCount} workspaces={workspaces}>{children}</WorkspaceShell></Suspense>;
+  return <Suspense fallback={<div className="min-h-screen bg-background" />}><WorkspaceShell workspaceId={workspaceId} userName={user.name} isDemo={isDemoWorkspace} exceptionCount={exceptionCount} workspaces={workspaces}>{children}</WorkspaceShell></Suspense>;
 }

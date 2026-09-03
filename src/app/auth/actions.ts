@@ -31,12 +31,25 @@ function authCallbackUrl(nextPath: string) {
   return callbackUrl.toString();
 }
 
-function logAuthRejection(operation: string, error: { code?: string; status?: number }) {
+function accountCreatedPath(nextPath: string, delivery: "sent" | "delayed") {
+  const params = new URLSearchParams({ returnTo: nextPath, delivery });
+  return `/auth/account-created?${params.toString()}`;
+}
+
+type AuthFailure = { code?: string; name?: string; status?: number };
+
+function isAuthServiceUnavailable(error: AuthFailure) {
+  return error.name === "AuthRetryableFetchError"
+    || error.status === 0
+    || (typeof error.status === "number" && error.status >= 500);
+}
+
+function logAuthFailure(operation: string, error: AuthFailure) {
   logger.warn({
     operation,
-    code: error.code || "unknown",
-    status: error.status || null,
-  }, "Supabase auth request rejected");
+    code: error.code ?? error.name ?? "unknown",
+    status: error.status ?? null,
+  }, "Supabase auth request failed");
 }
 
 export async function signInAction(_state: AuthState, formData: FormData): Promise<AuthState> {
@@ -46,7 +59,10 @@ export async function signInAction(_state: AuthState, formData: FormData): Promi
   if (!supabase) return { error: "Account sign-in is not configured in this environment. Use the sample workspace instead." };
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) {
-    logAuthRejection("sign_in", error);
+    logAuthFailure("sign_in", error);
+    if (isAuthServiceUnavailable(error)) {
+      return { error: "Sign-in is temporarily unavailable. Try again shortly or contact support." };
+    }
     if (error.code === "email_not_confirmed") {
       return { error: "Confirm your email before signing in. Use “Send a new one” below if the first confirmation link did not work." };
     }
@@ -94,10 +110,16 @@ export async function signUpAction(_state: AuthState, formData: FormData): Promi
     },
   });
   if (error) {
-    logAuthRejection("sign_up", error);
+    logAuthFailure("sign_up", error);
+    if (error.code === "over_email_send_rate_limit") {
+      redirect(accountCreatedPath(returnPath, "delayed"));
+    }
+    if (isAuthServiceUnavailable(error)) {
+      return { error: "Account creation is temporarily unavailable. Try again shortly or contact support." };
+    }
     return { error: error.message.includes("registered") ? "An account already uses this email. Sign in instead." : "We could not create the account. Try again or contact support." };
   }
-  if (!data.session) return { message: "Check your email to verify the account, then return to sign in." };
+  if (!data.session) redirect(accountCreatedPath(returnPath, "sent"));
   if (data.user) {
     const serviceClient = getSupabaseServiceClient();
     await serviceClient?.from("profiles").update({ last_seen_at: new Date().toISOString() }).eq("id", data.user.id);
@@ -125,7 +147,7 @@ export async function resendConfirmationAction(_state: AuthState, formData: Form
     email: email.data,
     options: { emailRedirectTo: authCallbackUrl(returnPath) },
   });
-  if (error) logAuthRejection("resend_confirmation", error);
+  if (error) logAuthFailure("resend_confirmation", error);
   return { message: "If that account still needs verification, a new confirmation email is on its way." };
 }
 
@@ -137,7 +159,7 @@ export async function requestPasswordResetAction(_state: AuthState, formData: Fo
   const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
     redirectTo: authCallbackUrl("/auth/reset-password"),
   });
-  if (error) logAuthRejection("request_password_reset", error);
+  if (error) logAuthFailure("request_password_reset", error);
   return { message: "If an account exists for that email, a reset link is on its way." };
 }
 
