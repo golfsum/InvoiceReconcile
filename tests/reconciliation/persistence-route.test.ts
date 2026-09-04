@@ -75,7 +75,7 @@ describe("reconciliation persistence route", () => {
         return { data: { allowed: true, code: "allowed", plan: "free", limit: 100, used: 0, requested: 1, remaining: 99, period_start: "2026-08-01", period_end: "2026-08-31", existing: false, reservation_id: "11700000-0000-4000-8000-000000000002" }, error: null };
       }
       if (name === "persist_reconciliation_run_v2") {
-        return { data: { run_record_id: runRecordId, saved_at: "2026-08-23T12:00:00.000Z" }, error: null };
+        return { data: [{ run_record_id: runRecordId, saved_at: "2026-08-23T12:00:00.000Z" }], error: null };
       }
       return { data: null, error: { code: "unknown_rpc" } };
     });
@@ -243,5 +243,47 @@ describe("reconciliation persistence route", () => {
       },
     });
     expect(body.result.matches.length).toBeGreaterThan(0);
+  });
+
+  it("does not call a sample save failure a durable storage outage", async () => {
+    const workspaceId = "11000000-0000-4000-8000-000000000001";
+    const rpc = vi.fn(async (name: string) => {
+      if (name === "get_reconciliation_import_context") {
+        return { data: { invoice_states: [], payment_states: [] }, error: null };
+      }
+      if (name === "reserve_reconciliation_capacity") {
+        return { data: { allowed: true, code: "allowed", plan: "free", limit: 50, used: 0, requested: 21, remaining: 29, period_start: "2026-09-01", period_end: "2026-09-30", existing: false, reservation_id: "11700000-0000-4000-8000-000000000002" }, error: null };
+      }
+      if (name === "persist_reconciliation_run_v2") {
+        return { data: null, error: { code: "22023", message: "hidden" } };
+      }
+      return { data: null, error: { code: "unknown_rpc" } };
+    });
+    const supabase = {
+      auth: { getUser: vi.fn(async () => ({ data: { user: { id: "a0000000-0000-4000-8000-000000000001" } }, error: null })) },
+      from: vi.fn((table: string) => {
+        if (table === "application_errors") return { insert: vi.fn(async () => ({ error: null })) };
+        return { select: vi.fn(() => ({ eq: vi.fn(() => ({ maybeSingle: vi.fn(async () => ({ data: {
+          id: workspaceId,
+          organization_id: "12000000-0000-4000-8000-000000000001",
+          currency_code: "USD",
+          match_days_before: 3,
+          match_days_after: 90,
+        }, error: null })) })) })) };
+      }),
+      rpc,
+    };
+    vi.doMock("@/lib/supabase/server", () => ({ getSupabaseServerClient: vi.fn(async () => supabase) }));
+
+    const { POST } = await import("@/app/api/reconciliation/run/route");
+    const response = await POST({
+      url: `https://invoicereconcile.com/api/reconciliation/run?workspaceId=${workspaceId}&sample=1`,
+      headers: new Headers({ origin: "https://invoicereconcile.com" }),
+      formData: async () => ({ get: (key: string) => (key === "workspaceId" ? workspaceId : null) }),
+    } as unknown as Request);
+    const body = await response.json();
+    expect(response.status).toBe(503);
+    expect(body.error).toContain("sample run could not be saved");
+    expect(body.error).not.toContain("durable storage");
   });
 });

@@ -30,6 +30,11 @@ import {
   paymentLimitResponse,
   type PaymentLimitExceeded,
 } from "@/lib/billing/entitlements";
+import {
+  parsePersistRpcResult,
+  persistFailureKind,
+  persistFailureMessage,
+} from "@/lib/reconciliation/rpc-result";
 import { checkRateLimit, privacySafeRequestKey, rateLimitHeaders, verifySameOrigin } from "@/lib/rate-limit";
 import { logServerError } from "@/lib/logger";
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -52,7 +57,7 @@ type PersistenceOutcome =
       };
     }
   | { kind: "forbidden" }
-  | { kind: "unavailable" }
+  | { kind: "unavailable"; message: string }
   | { kind: "limit_exceeded"; entitlement: PaymentLimitExceeded };
 
 type ServerSupabaseClient = NonNullable<Awaited<ReturnType<typeof getSupabaseServerClient>>>;
@@ -75,37 +80,8 @@ function localPersistence(reason: WorkspaceDataPersistence["reason"]): Persisten
   return { kind: "ready", value: { status: "local", reason } };
 }
 
-function persistenceRpcResult(value: unknown): {
-  runRecordId: string;
-  savedAt: string;
-  canonicalCounts?: {
-    newPayments: number;
-    existingPayments: number;
-    carriedPayments: number;
-    resolvedPayments: number;
-    existingInvoices: number;
-  };
-} | null {
-  if (!value || typeof value !== "object") return null;
-  const record = value as Record<string, unknown>;
-  if (typeof record.run_record_id !== "string" || typeof record.saved_at !== "string") return null;
-  const rawCounts = [
-    record.new_payment_count,
-    record.duplicate_payment_count,
-    record.carried_payment_count,
-    record.resolved_payment_count,
-    record.duplicate_invoice_count,
-  ];
-  const canonicalCounts = rawCounts.every((count) => typeof count === "number" && Number.isInteger(count) && count >= 0)
-    ? {
-        newPayments: rawCounts[0] as number,
-        existingPayments: rawCounts[1] as number,
-        carriedPayments: rawCounts[2] as number,
-        resolvedPayments: rawCounts[3] as number,
-        existingInvoices: rawCounts[4] as number,
-      }
-    : undefined;
-  return { runRecordId: record.run_record_id, savedAt: record.saved_at, canonicalCounts };
+function persistenceFailure(sample: boolean, code?: string): Extract<PersistenceOutcome, { kind: "unavailable" }> {
+  return { kind: "unavailable", message: persistFailureMessage(persistFailureKind(code), sample) };
 }
 
 function isUploadedFile(value: FormDataEntryValue | null): value is File {
@@ -127,10 +103,11 @@ async function persistRun(input: {
   billablePaymentCount: number;
   invoiceImport: ReturnType<typeof buildDurableImport>;
   paymentImport: ReturnType<typeof buildDurableImport>;
+  sample: boolean;
 }, supabase: ServerSupabaseClient | null): Promise<PersistenceOutcome> {
   if (input.workspaceId === "demo") return localPersistence("demo");
   if (!workspaceIdSchema.safeParse(input.workspaceId).success) return { kind: "forbidden" };
-  if (!supabase) return { kind: "unavailable" };
+  if (!supabase) return persistenceFailure(input.sample);
 
   const { data: entitlementData, error: entitlementError } = await supabase.rpc(
     "reserve_reconciliation_capacity",
@@ -147,14 +124,14 @@ async function persistRun(input: {
       operation: "reserve_reconciliation_capacity",
       code: entitlementError.code,
     });
-    return { kind: "unavailable" };
+    return persistenceFailure(input.sample, entitlementError.code);
   }
   const entitlement = parseReconciliationEntitlement(entitlementData);
   if (!entitlement) {
     logServerError(new Error("Capacity RPC returned an invalid result"), {
       operation: "reserve_reconciliation_capacity",
     });
-    return { kind: "unavailable" };
+    return persistenceFailure(input.sample);
   }
   if (!entitlement.allowed) return { kind: "limit_exceeded", entitlement };
 
@@ -169,13 +146,13 @@ async function persistRun(input: {
   if (error) {
     if (error.code === "42501") return { kind: "forbidden" };
     logServerError(error, { operation: "persist_reconciliation_run_v2", code: error.code });
-    return { kind: "unavailable" };
+    return persistenceFailure(input.sample, error.code);
   }
 
-  const persisted = persistenceRpcResult(data);
+  const persisted = parsePersistRpcResult(data);
   if (!persisted) {
     logServerError(new Error("Persistence RPC returned an invalid result"), { operation: "persist_reconciliation_run_v2" });
-    return { kind: "unavailable" };
+    return persistenceFailure(input.sample);
   }
   return {
     kind: "ready",
@@ -422,11 +399,12 @@ export async function POST(request: Request) {
       workspaceId,
       snapshot,
       billablePaymentCount,
+      sample: requestedSample,
       invoiceImport: buildDurableImport({
         fileName: invoiceFile.name,
-        fileSize: invoiceFile.size,
+        fileSize: invoiceFile.size > 0 ? invoiceFile.size : invoiceSource.byteLength,
         sha256: invoiceSource.sha256,
-          sheetName: invoiceSource.selectedSheet,
+        sheetName: invoiceSource.selectedSheet,
         headers: invoiceSource.headers,
         rows: invoiceSource.rows,
         mapping: invoiceMapping,
@@ -434,9 +412,9 @@ export async function POST(request: Request) {
       }),
       paymentImport: buildDurableImport({
         fileName: paymentFile.name,
-        fileSize: paymentFile.size,
+        fileSize: paymentFile.size > 0 ? paymentFile.size : paymentSource.byteLength,
         sha256: paymentSource.sha256,
-          sheetName: paymentSource.selectedSheet,
+        sheetName: paymentSource.selectedSheet,
         headers: paymentSource.headers,
         rows: paymentSource.rows,
         mapping: paymentMapping,
@@ -446,7 +424,7 @@ export async function POST(request: Request) {
     if (persistence.kind === "forbidden") return NextResponse.json({ error: "You do not have permission to save reconciliation runs in this workspace." }, { status: 403, headers: rateLimitHeaders(limit) });
     if (persistence.kind === "unavailable") {
       await recordLiveImportError(liveAccess, workspaceId, "durable_save_unavailable", "A reconciliation run could not be securely saved.");
-      return NextResponse.json({ error: "The reconciliation could not be securely authorized and saved, so no workspace run was created. Retry when durable storage is available." }, { status: 503, headers: rateLimitHeaders(limit) });
+      return NextResponse.json({ error: persistence.message }, { status: 503, headers: rateLimitHeaders(limit) });
     }
     if (persistence.kind === "limit_exceeded") return NextResponse.json(paymentLimitResponse(persistence.entitlement), { status: 402, headers: rateLimitHeaders(limit) });
     const issueCount = invoiceSource.parseIssues.length + paymentSource.parseIssues.length + invoiceResult.issues.length + paymentResult.issues.length;

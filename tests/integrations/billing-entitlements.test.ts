@@ -74,6 +74,18 @@ describe("billing entitlements", () => {
       period_end: "2026-08-31",
       existing: false,
     })).toBeNull();
+    expect(parseReconciliationEntitlement({
+      allowed: true,
+      code: "allowed",
+      plan: "free",
+      limit: 50,
+      used: 0,
+      requested: 21,
+      remaining: 29,
+      period_start: "2026-09-01T00:00:00.000Z",
+      period_end: "2026-09-30T23:59:59.999Z",
+      existing: false,
+    })).toMatchObject({ allowed: true, period_start: "2026-09-01", period_end: "2026-09-30" });
   });
 });
 

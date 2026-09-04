@@ -26,6 +26,7 @@ export type ParsedImportSource = {
   parseIssues: ImportIssue[];
   fingerprint: string;
   sha256: string;
+  byteLength: number;
   sheets: string[];
   selectedSheet?: string;
 };
@@ -176,6 +177,7 @@ export async function readImportBytes(input: {
       parseIssues: parsed.issues,
       fingerprint: fingerprintImport(bytes),
       sha256,
+      byteLength: bytes.byteLength,
       sheets: [],
     };
   }
@@ -203,6 +205,7 @@ export async function readImportBytes(input: {
     parseIssues: [],
     fingerprint: fingerprintImport(bytes),
     sha256,
+    byteLength: bytes.byteLength,
     sheets,
     selectedSheet: worksheet.name,
   };

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeEntitlementRpc } from "@/lib/reconciliation/rpc-result";
 
 export const entitlementPlanSchema = z.enum(["free", "solo", "business", "bookkeeper"]);
 export type EntitlementPlan = z.infer<typeof entitlementPlanSchema>;
@@ -33,7 +34,7 @@ export type ReconciliationEntitlement = z.infer<typeof reconciliationEntitlement
 export type PaymentLimitExceeded = Extract<ReconciliationEntitlement, { allowed: false }>;
 
 export function parseReconciliationEntitlement(value: unknown): ReconciliationEntitlement | null {
-  const parsed = reconciliationEntitlementSchema.safeParse(value);
+  const parsed = reconciliationEntitlementSchema.safeParse(normalizeEntitlementRpc(value));
   return parsed.success ? parsed.data : null;
 }
 
