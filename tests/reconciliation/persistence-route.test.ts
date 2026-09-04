@@ -215,4 +215,33 @@ describe("reconciliation persistence route", () => {
       }),
     ]));
   });
+
+  it("reconciles bundled samples without a private upload when rate limiting is unavailable", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_URL", "");
+    vi.stubEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", "");
+    vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
+    vi.stubEnv("UPSTASH_REDIS_REST_TOKEN", "");
+    const entries = new Map<string, FormDataEntryValue>();
+    entries.set("workspaceId", "demo");
+    const { POST } = await import("@/app/api/reconciliation/run/route");
+    const request = {
+      url: "https://invoicereconcile.com/api/reconciliation/run?workspaceId=demo&sample=1",
+      headers: new Headers({ origin: "https://invoicereconcile.com" }),
+      formData: async () => ({ get: (key: string) => entries.get(key) ?? null }),
+    } as unknown as Request;
+    const response = await POST(request);
+    const body = await response.json();
+    expect(response.status, JSON.stringify(body)).toBe(200);
+    expect(body).toMatchObject({
+      persistence: { status: "local", reason: "demo" },
+      importSummary: {
+        invoiceRows: 30,
+        invoicesAccepted: 30,
+        paymentRows: 22,
+        paymentsAccepted: 21,
+      },
+    });
+    expect(body.result.matches.length).toBeGreaterThan(0);
+  });
 });

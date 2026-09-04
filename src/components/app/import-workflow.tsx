@@ -155,6 +155,7 @@ export function ImportWorkflow({ workspaceId }: { workspaceId: string }) {
   const [accepted, setAccepted] = useState<ImportKind[]>([]);
   const [matching, setMatching] = useState(false);
   const [sourceIds, setSourceIds] = useState<Partial<Record<ImportKind, string>>>({});
+  const [sampleKinds, setSampleKinds] = useState<Partial<Record<ImportKind, boolean>>>({});
   const [sourceProgress, setSourceProgress] = useState<Partial<Record<ImportKind, AsyncProgress>>>({});
   const [matchingProgress, setMatchingProgress] = useState<AsyncProgress | null>(null);
   const invoiceInput = useRef<HTMLInputElement>(null);
@@ -241,6 +242,7 @@ export function ImportWorkflow({ workspaceId }: { workspaceId: string }) {
 
   async function previewFile(kind: ImportKind, file: File, sheet?: string, autoConfirm = false) {
     files.current[kind] = file;
+    setSampleKinds((current) => ({ ...current, [kind]: false }));
     setLoading(kind);
     try {
       if (workspaceId !== "demo") {
@@ -275,12 +277,32 @@ export function ImportWorkflow({ workspaceId }: { workspaceId: string }) {
   async function loadSample(kind: ImportKind) {
     setLoading(kind);
     try {
-      const response = await fetch(labels[kind].sample);
-      if (!response.ok) throw new Error(`The fictional sample ${kind === "invoice" ? "invoices" : "payments"} could not be loaded.`);
-      const blob = await response.blob();
-      await previewFile(kind, new File([blob], labels[kind].sample.split("/").pop() || `${kind}.csv`, { type: "text/csv" }), undefined, true);
+      const response = await fetch("/api/imports/samples", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ workspaceId, kind }),
+      });
+      const result = await response.json() as Preview & { error?: string };
+      if (!response.ok) throw new Error(result.error || "The sample could not be loaded.");
+      const sampleReady = hasRequiredMapping(result);
+      const fileResponse = await fetch(labels[kind].sample);
+      files.current[kind] = fileResponse.ok
+        ? new File([await fileResponse.blob()], result.file.name, { type: "text/csv" })
+        : new File([], result.file.name, { type: "text/csv" });
+      setSampleKinds((current) => ({ ...current, [kind]: true }));
+      setSourceIds((current) => ({ ...current, [kind]: undefined }));
+      setSourceProgress((current) => ({ ...current, [kind]: undefined }));
+      setPreviews((current) => ({ ...current, [kind]: result }));
+      setAccepted((current) => sampleReady
+        ? current.includes(kind) ? current : [...current, kind]
+        : current.filter((item) => item !== kind));
+      toast.success(sampleReady
+        ? `${labels[kind].title} sample ready`
+        : `${result.rowCount} ${kind === "invoice" ? "invoice" : "payment"} rows found`, sampleReady
+        ? { description: "Required columns were detected and confirmed automatically." }
+        : undefined);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "The fictional sample could not be loaded.");
+      toast.error(error instanceof Error ? error.message : "The sample could not be loaded.");
     } finally {
       setLoading(null);
     }
@@ -342,6 +364,8 @@ export function ImportWorkflow({ workspaceId }: { workspaceId: string }) {
     const sourceId = sourceIds[kind];
     if (!sourceId) {
       setPreviews((current) => ({ ...current, [kind]: undefined }));
+      setSampleKinds((current) => ({ ...current, [kind]: undefined }));
+      setAccepted((current) => current.filter((item) => item !== kind));
       delete files.current[kind];
       return;
     }
@@ -351,6 +375,7 @@ export function ImportWorkflow({ workspaceId }: { workspaceId: string }) {
       if (!response.ok && result.deletionStatus !== "pending") throw new Error(result.error || "Source deletion could not be scheduled.");
       setPreviews((current) => ({ ...current, [kind]: undefined }));
       setSourceIds((current) => ({ ...current, [kind]: undefined }));
+      setSampleKinds((current) => ({ ...current, [kind]: undefined }));
       setSourceProgress((current) => ({ ...current, [kind]: undefined }));
       setAccepted((current) => current.filter((item) => item !== kind));
       delete files.current[kind];
@@ -425,9 +450,11 @@ export function ImportWorkflow({ workspaceId }: { workspaceId: string }) {
     const paymentFile = files.current.payment;
     const invoicePreview = previews.invoice;
     const paymentPreview = previews.payment;
-    if (!invoiceFile || !paymentFile || !invoicePreview || !paymentPreview || accepted.length !== 2) return;
+    if (!invoicePreview || !paymentPreview || accepted.length !== 2) return;
+    const bothSamples = Boolean(sampleKinds.invoice && sampleKinds.payment);
+    if (!bothSamples && (!invoiceFile || !paymentFile)) return;
     setMatching(true);
-    if (workspaceId !== "demo") {
+    if (workspaceId !== "demo" && sourceIds.invoice && sourceIds.payment && !bothSamples) {
       try {
         await runLiveReconciliation(invoicePreview, paymentPreview);
       } catch (error) {
@@ -437,15 +464,19 @@ export function ImportWorkflow({ workspaceId }: { workspaceId: string }) {
       return;
     }
     const body = new FormData();
-    body.set("invoiceFile", invoiceFile);
-    body.set("paymentFile", paymentFile);
+    if (!bothSamples) {
+      if (!invoiceFile || !paymentFile) return;
+      body.set("invoiceFile", invoiceFile);
+      body.set("paymentFile", paymentFile);
+    }
     body.set("workspaceId", workspaceId);
     body.set("invoiceMapping", JSON.stringify(invoicePreview.mapping));
     body.set("paymentMapping", JSON.stringify(paymentPreview.mapping));
     if (invoicePreview.selectedSheet) body.set("invoiceSheet", invoicePreview.selectedSheet);
     if (paymentPreview.selectedSheet) body.set("paymentSheet", paymentPreview.selectedSheet);
     try {
-      const response = await fetch(`/api/reconciliation/run?workspaceId=${encodeURIComponent(workspaceId)}`, { method: "POST", body });
+      const sampleQuery = bothSamples ? "&sample=1" : "";
+      const response = await fetch(`/api/reconciliation/run?workspaceId=${encodeURIComponent(workspaceId)}${sampleQuery}`, { method: "POST", body });
       const result: unknown = await response.json();
       const errorMessage = isRecord(result) && typeof result.error === "string" ? result.error : null;
       if (!response.ok) throw new Error(errorMessage || "The reconciliation could not be completed.");
@@ -467,9 +498,9 @@ export function ImportWorkflow({ workspaceId }: { workspaceId: string }) {
         sendVercelAnalyticsEvent("invoice_imported", { rows: result.counts.invoices });
         sendVercelAnalyticsEvent("payment_imported", { rows: result.counts.payments });
         sendVercelAnalyticsEvent("reconciliation_completed", { matches: result.counts.matches, review: result.counts.review });
-        sendAnalyticsEvent("invoice_imported", { import_type: "invoice", record_count_band: recordCountBand(result.counts.invoices) });
-        sendAnalyticsEvent("payment_imported", { import_type: "payment", record_count_band: recordCountBand(result.counts.payments) });
-        sendAnalyticsEvent("reconciliation_completed", { result: "completed", record_count_band: recordCountBand(result.counts.payments) });
+        sendAnalyticsEvent("invoice_imported", { import_type: "invoice", record_count_band: recordCountBand(result.counts.invoices), ...(bothSamples ? { source: "sample" as const } : {}) });
+        sendAnalyticsEvent("payment_imported", { import_type: "payment", record_count_band: recordCountBand(result.counts.payments), ...(bothSamples ? { source: "sample" as const } : {}) });
+        sendAnalyticsEvent("reconciliation_completed", { result: "completed", record_count_band: recordCountBand(result.counts.payments), ...(bothSamples ? { source: "sample" as const } : {}) });
         toast.success("Reconciliation saved", { description: `${result.counts.matches} payment results are ready to inspect from this workspace.` });
       }
       const decisionKey = `ir_decisions_${workspaceId}_v1`;
@@ -491,12 +522,12 @@ export function ImportWorkflow({ workspaceId }: { workspaceId: string }) {
         const done = accepted.includes(kind);
         return <section key={kind} className="min-w-0 border bg-surface">
           <div className="flex items-start justify-between gap-4 border-b p-5"><div><div className="flex items-center gap-2"><FileSpreadsheet className="size-5 text-brand" /><h2 className="font-semibold">{labels[kind].title}</h2></div><p className="mt-2 text-sm leading-6 text-muted">{labels[kind].copy}</p></div>{done ? <span className="inline-flex items-center gap-1 bg-success-soft px-2 py-1 text-xs font-bold text-success"><Check className="size-3.5" />Ready</span> : null}</div>
-          {!preview ? <div className="p-5"><button type="button" className="flex min-h-44 w-full flex-col items-center justify-center border border-dashed border-border-strong bg-background p-6 text-center transition hover:border-brand hover:bg-brand-soft/40" onClick={() => inputRefs[kind].current?.click()} disabled={loading !== null}>{loading === kind ? <LoaderCircle className="size-7 animate-spin text-brand" /> : <Upload className="size-7 text-brand" />}<span className="mt-4 text-sm font-semibold">{loading === kind ? (sourceProgress[kind]?.label || "Preparing private source") : `Choose ${kind} CSV or XLSX`}</span><span className="mt-1 text-xs text-muted">{workspaceId === "demo" ? "Fictional source data is previewed before it is accepted." : "The browser stays responsive while upload and validation run asynchronously."}</span>{sourceProgress[kind] ? <progress className="mt-4 h-2 w-full max-w-xs accent-brand" value={sourceProgress[kind]?.current} max={sourceProgress[kind]?.total || 100} aria-label={`${labels[kind].title} progress`} /> : null}</button>{sourceIds[kind] ? <Button className="mt-3 w-full" variant="quiet" onClick={() => void removeSource(kind)}><Trash2 className="size-4" />Remove private source</Button> : <Button className="mt-3 w-full" variant="secondary" disabled={loading !== null} onClick={() => void loadSample(kind)}>{loading === kind ? <LoaderCircle className="size-4 animate-spin" /> : null}{loading === kind ? "Loading fictional sample" : `Use fictional sample ${kind === "invoice" ? "invoices" : "payments"}`}</Button>}</div> : <PreviewPanel preview={preview} done={done} isPrivate={workspaceId !== "demo"} onReplace={() => inputRefs[kind].current?.click()} onRemove={() => void removeSource(kind)} onConfirm={() => confirm(kind)} onMappingChange={(field, header) => updateMapping(kind, field, header)} onSheetChange={(sheet) => void changeSheet(kind, sheet)} />}
+          {!preview ? <div className="p-5"><button type="button" className="flex min-h-44 w-full flex-col items-center justify-center border border-dashed border-border-strong bg-background p-6 text-center transition hover:border-brand hover:bg-brand-soft/40" onClick={() => inputRefs[kind].current?.click()} disabled={loading !== null}>{loading === kind ? <LoaderCircle className="size-7 animate-spin text-brand" /> : <Upload className="size-7 text-brand" />}<span className="mt-4 text-sm font-semibold">{loading === kind ? (sourceProgress[kind]?.label || "Preparing private source") : `Choose ${kind} CSV or XLSX`}</span><span className="mt-1 text-xs text-muted">{workspaceId === "demo" ? "Fictional source data is previewed before it is accepted." : "The browser stays responsive while upload and validation run asynchronously."}</span>{sourceProgress[kind] ? <progress className="mt-4 h-2 w-full max-w-xs accent-brand" value={sourceProgress[kind]?.current} max={sourceProgress[kind]?.total || 100} aria-label={`${labels[kind].title} progress`} /> : null}</button>{sourceIds[kind] ? <Button className="mt-3 w-full" variant="quiet" onClick={() => void removeSource(kind)}><Trash2 className="size-4" />Remove private source</Button> : <Button className="mt-3 w-full" variant="secondary" disabled={loading !== null} onClick={() => void loadSample(kind)}>{loading === kind ? <LoaderCircle className="size-4 animate-spin" /> : null}{loading === kind ? "Loading sample" : `Use sample ${kind === "invoice" ? "invoices" : "payments"}`}</Button>}</div> : <PreviewPanel preview={preview} done={done} isPrivate={workspaceId !== "demo"} onReplace={() => inputRefs[kind].current?.click()} onRemove={() => void removeSource(kind)} onConfirm={() => confirm(kind)} onMappingChange={(field, header) => updateMapping(kind, field, header)} onSheetChange={(sheet) => void changeSheet(kind, sheet)} />}
           <input ref={inputRefs[kind]} className="sr-only" type="file" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={(event) => { const file = event.target.files?.[0]; if (file) void previewFile(kind, file); event.currentTarget.value = ""; }} />
         </section>;
       })}
     </div>
-    <div className="mt-6 flex flex-col gap-4 border bg-surface p-5 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold">{matching && matchingProgress ? matchingProgress.label : accepted.length === 2 ? "Both imports are ready" : `${2 - accepted.length} import ${2 - accepted.length === 1 ? "is" : "are"} still needed`}</p><p className="mt-1 text-sm text-muted">{workspaceId === "demo" ? "Matching runs only after both mappings are confirmed." : "Once queued, reconciliation continues safely if you leave this page. We will notify you in the app, and by email if enabled, when it is ready."}</p>{matchingProgress ? <progress className="mt-3 h-2 w-full max-w-md accent-brand" value={matchingProgress.current} max={matchingProgress.total} aria-label="Background reconciliation progress" /> : null}</div><Button size="lg" disabled={accepted.length !== 2 || matching} onClick={() => void runReconciliation()}>{matching ? <LoaderCircle className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}{matching ? "Reconciling in background" : workspaceId === "demo" ? "Run reconciliation" : "Queue reconciliation"}</Button></div>
+    <div className="mt-6 flex flex-col gap-4 border bg-surface p-5 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-semibold">{matching && matchingProgress ? matchingProgress.label : accepted.length === 2 ? "Both imports are ready" : `${2 - accepted.length} import ${2 - accepted.length === 1 ? "is" : "are"} still needed`}</p><p className="mt-1 text-sm text-muted">{workspaceId === "demo" ? "Matching runs only after both mappings are confirmed." : "Once queued, reconciliation continues safely if you leave this page. We will notify you in the app, and by email if enabled, when it is ready."}</p>{matchingProgress ? <progress className="mt-3 h-2 w-full max-w-md accent-brand" value={matchingProgress.current} max={matchingProgress.total} aria-label="Background reconciliation progress" /> : null}</div><Button size="lg" disabled={accepted.length !== 2 || matching} onClick={() => void runReconciliation()}>{matching ? <LoaderCircle className="size-4 animate-spin" /> : <ArrowRight className="size-4" />}{matching ? (workspaceId === "demo" || (sampleKinds.invoice && sampleKinds.payment) ? "Reconciling" : "Reconciling in background") : workspaceId === "demo" || (sampleKinds.invoice && sampleKinds.payment) ? "Run reconciliation" : "Queue reconciliation"}</Button></div>
   </div>;
 }
 

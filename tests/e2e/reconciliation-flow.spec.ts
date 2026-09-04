@@ -12,20 +12,20 @@ test("fictional invoice and payment files reconcile into the review queue", asyn
   const paymentImport = page.locator("section").filter({ has: page.getByRole("heading", { name: "Incoming payments" }) });
 
   const invoicePreviewResponse = page.waitForResponse((response) =>
-    new URL(response.url()).pathname === "/api/imports/preview"
+    new URL(response.url()).pathname === "/api/imports/samples"
     && response.request().method() === "POST",
   );
-  await invoiceImport.getByRole("button", { name: "Use fictional sample invoices" }).click();
+  await invoiceImport.getByRole("button", { name: "Use sample invoices" }).click();
   const invoicePreview = await invoicePreviewResponse;
   expect(invoicePreview.status(), await invoicePreview.text()).toBe(200);
   await expect(invoiceImport.getByText("30 data rows")).toBeVisible({ timeout: 10_000 });
   await expect(invoiceImport.getByRole("button", { name: "Mapping confirmed" })).toBeVisible();
 
   const paymentPreviewResponse = page.waitForResponse((response) =>
-    new URL(response.url()).pathname === "/api/imports/preview"
+    new URL(response.url()).pathname === "/api/imports/samples"
     && response.request().method() === "POST",
   );
-  await paymentImport.getByRole("button", { name: "Use fictional sample payments" }).click();
+  await paymentImport.getByRole("button", { name: "Use sample payments" }).click();
   const paymentPreview = await paymentPreviewResponse;
   expect(paymentPreview.status(), await paymentPreview.text()).toBe(200);
   await expect(paymentImport.getByText("22 data rows")).toBeVisible({ timeout: 10_000 });

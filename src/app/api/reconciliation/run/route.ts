@@ -6,6 +6,7 @@ import {
   normalizePaymentRows,
   uploadSafetyMessage,
 } from "@/lib/imports";
+import { bundledSampleAsFile, readBundledSample } from "@/lib/imports/sample-data";
 import { readUploadedImportFile, requestedColumnMapping } from "@/lib/imports/server-file";
 import { reconcile } from "@/lib/reconciliation";
 import {
@@ -260,10 +261,20 @@ function liveAccessError(access: Exclude<LiveWorkspaceAccess, { kind: "ready" }>
 
 export async function POST(request: Request) {
   if (!verifySameOrigin(request)) return NextResponse.json({ error: "Invalid request origin." }, { status: 403 });
-  const limit = await checkRateLimit({ key: privacySafeRequestKey(request, "reconciliation-run"), prefix: "reconciliation-run", limit: 12, windowSeconds: 300 });
+  const requestUrl = new URL(request.url);
+  const requestedSample = requestUrl.searchParams.get("sample") === "1";
+  const limit = await checkRateLimit({
+    key: privacySafeRequestKey(request, requestedSample ? "reconciliation-sample" : "reconciliation-run"),
+    prefix: requestedSample ? "reconciliation-sample" : "reconciliation-run",
+    limit: requestedSample ? 20 : 12,
+    windowSeconds: 300,
+    failClosed: requestedSample ? false : undefined,
+  });
   if (!limit.allowed) return NextResponse.json({ error: limit.source === "unavailable" ? "Reconciliation processing is temporarily unavailable." : "Too many reconciliation attempts. Wait a few minutes and try again." }, { status: limit.source === "unavailable" ? 503 : 429, headers: rateLimitHeaders(limit) });
-  if (Number(request.headers.get("content-length") || 0) > MAX_FILE_SIZE * 2 + 100_000) return NextResponse.json({ error: "The combined import is larger than the 4 MB processing limit." }, { status: 413 });
-  const requestedWorkspaceId = new URL(request.url).searchParams.get("workspaceId")?.trim() || null;
+  if (Number(request.headers.get("content-length") || 0) > (requestedSample ? 65_536 : MAX_FILE_SIZE * 2 + 100_000)) {
+    return NextResponse.json({ error: requestedSample ? "The sample reconciliation request is too large." : "The combined import is larger than the 4 MB processing limit." }, { status: 413 });
+  }
+  const requestedWorkspaceId = requestUrl.searchParams.get("workspaceId")?.trim() || null;
   if (requestedWorkspaceId && requestedWorkspaceId !== "demo" && !workspaceIdSchema.safeParse(requestedWorkspaceId).success) return NextResponse.json({ error: "Choose a valid workspace before running reconciliation." }, { status: 400 });
   let liveAccess: Extract<LiveWorkspaceAccess, { kind: "ready" }> | null = null;
   if (requestedWorkspaceId && requestedWorkspaceId !== "demo") {
@@ -272,10 +283,23 @@ export async function POST(request: Request) {
     liveAccess = access;
   }
   const form = await request.formData();
-  const invoiceFile = form.get("invoiceFile");
-  const paymentFile = form.get("paymentFile");
   const workspaceId = form.get("workspaceId")?.toString().trim() || requestedWorkspaceId || "demo";
-  if (!isUploadedFile(invoiceFile) || !isUploadedFile(paymentFile)) return NextResponse.json({ error: "Choose both an invoice file and a payment file." }, { status: 400 });
+  let invoiceFile: File;
+  let paymentFile: File;
+  if (requestedSample) {
+    const [invoiceSample, paymentSample] = await Promise.all([
+      readBundledSample("invoice"),
+      readBundledSample("payment"),
+    ]);
+    invoiceFile = bundledSampleAsFile(invoiceSample);
+    paymentFile = bundledSampleAsFile(paymentSample);
+  } else {
+    const invoiceUpload = form.get("invoiceFile");
+    const paymentUpload = form.get("paymentFile");
+    if (!isUploadedFile(invoiceUpload) || !isUploadedFile(paymentUpload)) return NextResponse.json({ error: "Choose both an invoice file and a payment file." }, { status: 400 });
+    invoiceFile = invoiceUpload;
+    paymentFile = paymentUpload;
+  }
   if (workspaceId !== "demo" && !workspaceIdSchema.safeParse(workspaceId).success) return NextResponse.json({ error: "Choose a valid workspace before running reconciliation." }, { status: 400 });
   if (requestedWorkspaceId && requestedWorkspaceId !== workspaceId) return NextResponse.json({ error: "The requested workspace does not match the uploaded reconciliation." }, { status: 400 });
   if (workspaceId !== "demo" && !liveAccess) {
