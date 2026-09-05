@@ -1,0 +1,5 @@
+Invoice Number,Customer Name,Invoice Date,Due Date,Original Amount,Outstanding Balance,Currency
+CG-QA-1001,Aspen Studio LLC,2026-08-15,2026-09-14,1200.00,1200.00,USD
+CG-QA-1002,Mesa Kitchen Supply,2026-08-16,2026-09-15,800.00,800.00,USD
+CG-QA-1003,Juniper Architecture,2026-08-17,2026-09-16,600.00,600.00,USD
+CG-QA-1004,Juniper Architecture,2026-08-18,2026-09-17,400.00,400.00,USD

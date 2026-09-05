@@ -75,7 +75,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-screen bg-background text-foreground antialiased">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           {children}
-          <Toaster richColors position="bottom-right" />
+          <Toaster richColors closeButton position="top-center" />
           <ConsentAnalytics firstPartyEnabled={firstPartyAnalytics} gaId={gaId} vercelEnabled={vercelAnalytics} />
         </ThemeProvider>
       </body>

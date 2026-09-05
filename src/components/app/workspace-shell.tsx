@@ -138,7 +138,7 @@ export function WorkspaceShell({ workspaceId, userName, isDemo, exceptionCount, 
           <nav aria-label="Workspace navigation" className="flex h-full flex-col p-3">
             <Link href="/app/workspaces" className="mb-3 flex items-center gap-2 border-b px-3 pb-4 pt-2 text-sm font-semibold text-muted-strong hover:text-foreground"><BookOpen className="size-4" /> All client workspaces</Link>
             <ul className="space-y-1">
-              {nav.filter((item) => isDemo || item.segment !== "rules").map((item) => {
+              {nav.map((item) => {
                 const href = item.segment ? `${base}/${item.segment}` : base;
                 const active = pathname === href;
                 const count = item.segment === "exceptions" ? exceptionCount : 0;
