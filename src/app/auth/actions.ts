@@ -112,7 +112,7 @@ export async function signUpAction(_state: AuthState, formData: FormData): Promi
   if (error) {
     logAuthFailure("sign_up", error);
     if (error.code === "over_email_send_rate_limit") {
-      redirect(accountCreatedPath(returnPath, "delayed"));
+      return { error: "Confirmation emails are temporarily unavailable. We could not confirm that your account was created. Wait a few minutes and try again, or contact support." };
     }
     if (isAuthServiceUnavailable(error)) {
       return { error: "Account creation is temporarily unavailable. Try again shortly or contact support." };
@@ -147,7 +147,12 @@ export async function resendConfirmationAction(_state: AuthState, formData: Form
     email: email.data,
     options: { emailRedirectTo: authCallbackUrl(returnPath) },
   });
-  if (error) logAuthFailure("resend_confirmation", error);
+  if (error) {
+    logAuthFailure("resend_confirmation", error);
+    if (error.code === "over_email_send_rate_limit" || isAuthServiceUnavailable(error)) {
+      return { error: "Confirmation emails are temporarily unavailable. Wait a few minutes and try again, or contact support." };
+    }
+  }
   return { message: "If that account still needs verification, a new confirmation email is on its way." };
 }
 
@@ -159,7 +164,12 @@ export async function requestPasswordResetAction(_state: AuthState, formData: Fo
   const { error } = await supabase.auth.resetPasswordForEmail(email.data, {
     redirectTo: authCallbackUrl("/auth/reset-password"),
   });
-  if (error) logAuthFailure("request_password_reset", error);
+  if (error) {
+    logAuthFailure("request_password_reset", error);
+    if (error.code === "over_email_send_rate_limit" || isAuthServiceUnavailable(error)) {
+      return { error: "Password reset emails are temporarily unavailable. Wait a few minutes and try again, or contact support." };
+    }
+  }
   return { message: "If an account exists for that email, a reset link is on its way." };
 }
 

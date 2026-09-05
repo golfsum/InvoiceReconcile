@@ -137,17 +137,18 @@ describe("paid plan signup handoff", () => {
     );
   });
 
-  it("treats a confirmation email rate limit as an account-created delivery delay", async () => {
+  it("does not claim account creation when confirmation email delivery was rejected", async () => {
     const signUp = vi.fn().mockResolvedValue({
-      data: { session: null, user: { id: "user-1" } },
+      data: { session: null, user: null },
       error: { code: "over_email_send_rate_limit", message: "Email rate limit exceeded", status: 429 },
     });
     getSupabaseServerClient.mockResolvedValue({ auth: { signUp } });
     const { signUpAction } = await import("@/app/auth/actions");
 
-    await expect(signUpAction({}, signupForm(""))).rejects.toThrow(
-      "redirect:/auth/account-created?returnTo=%2Fonboarding&delivery=delayed",
-    );
+    await expect(signUpAction({}, signupForm(""))).resolves.toEqual({
+      error: "Confirmation emails are temporarily unavailable. We could not confirm that your account was created. Wait a few minutes and try again, or contact support.",
+    });
+    expect(redirect).not.toHaveBeenCalled();
     expect(loggerWarn).toHaveBeenCalledWith({
       operation: "sign_up",
       code: "over_email_send_rate_limit",
