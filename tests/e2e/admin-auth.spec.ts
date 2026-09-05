@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { rejectOptionalAnalytics } from "./helpers";
 
-test("admin data is protected and the explicit local admin entry grants access", async ({ page }) => {
+test("admin data is protected and development access stays environment-scoped", async ({ page }) => {
   await page.goto("/admin");
   await rejectOptionalAnalytics(page);
 
@@ -11,7 +11,13 @@ test("admin data is protected and the explicit local admin entry grants access",
   await expect(page.getByRole("heading", { level: 1, name: "Welcome back" })).toBeVisible();
   await expect(page.getByText("Know what is growing and what needs attention.")).toHaveCount(0);
 
-  await page.goto("/dev/admin");
+  const devEntry = await page.goto("/dev/admin");
+  const hostname = new URL(page.url()).hostname;
+  if (!["localhost", "127.0.0.1", "[::1]"].includes(hostname)) {
+    expect(devEntry?.status()).toBe(404);
+    await expect(page.getByRole("button", { name: "Continue as local admin" })).toHaveCount(0);
+    return;
+  }
   await expect(page.getByRole("heading", { level: 1, name: "Open the internal dashboard" })).toBeVisible();
   await page.getByRole("button", { name: "Continue as local admin" }).click();
 
