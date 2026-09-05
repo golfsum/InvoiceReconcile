@@ -43,6 +43,13 @@ function validEnvironment(): Record<string, string> {
 }
 
 describe("production environment validation", () => {
+  it.each(["POSTMARK_SERVER_TOKEN", "POSTMARK_MESSAGE_STREAM", "NEXT_PUBLIC_LEGAL_NAME"])("rejects redacted exports for %s", (field) => {
+    const result = validateProductionEnvironment({ ...validEnvironment(), [field]: "[SENSITIVE]" });
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(formatProductionEnvironmentIssues(result.error.issues).join(" ")).toContain("redacted export placeholder");
+    expect(formatProductionEnvironmentIssues(result.error.issues).join(" ")).not.toContain("[SENSITIVE]");
+  });
   it("reports malformed URLs instead of throwing or echoing their contents", () => {
     const environment = { ...validEnvironment(), NEXT_PUBLIC_APP_URL: "private-invalid-value", UPSTASH_REDIS_REST_URL: "" };
     const result = validateProductionEnvironment(environment);

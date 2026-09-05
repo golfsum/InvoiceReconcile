@@ -6,7 +6,10 @@ const explicitBoolean = z.enum(["true", "false"], {
   error: "must be explicitly set to true or false",
 });
 
-const requiredText = (minimum = 1) => z.string().trim().min(minimum, "is required");
+const requiredText = (minimum = 1) => z.string().trim().min(minimum, "is required").refine(
+  (value) => !/^\[(?:sensitive|redacted)\]$/i.test(value),
+  "must contain the configured value, not a redacted export placeholder",
+);
 const nonPlaceholderText = (minimum = 2) => requiredText(minimum).refine(
   (value) => !/^(?:tbd|todo|unknown|n\/a|none|changeme|replace(?:[-_ ]?me)?|your[-_ ].*|<.*>)$/i.test(value),
   "must be replaced with the production operator value",
