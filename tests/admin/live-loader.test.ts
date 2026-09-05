@@ -71,4 +71,30 @@ describe("admin metrics loader authorization", () => {
     expect(metrics.users[0]?.subscribedAt).toBe("2026-08-20T15:30:00.000Z");
     expect(metrics.users[0]?.subscribedAt).not.toBe("2026-01-01T00:00:00.000Z");
   });
+
+  it("excludes QA revenue, activity and mixed rollups while retaining customer usage", async () => {
+    const today = new Date().toISOString();
+    const rowsByTable: Record<string, Record<string, unknown>[]> = {
+      profiles: [{ id: "qa" }, { id: "customer", email: "real@example.com", created_at: today }],
+      organizations: [{ id: "qa-org", created_by: "qa" }, { id: "real-org", created_by: "customer" }],
+      admin_reporting_exclusions: [{ kind: "user", subject_id: "qa" }],
+      subscriptions: [{ id: "qa-sub", organization_id: "qa-org", plan_code: "solo", status: "active", unit_amount_minor: 1900 }],
+      analytics_events: [{ user_id: "qa", event_name: "signup_completed", occurred_at: today }],
+      analytics_daily_aggregates: [{ organization_id: null, metric_code: "payments_processed", metric_value: 999, aggregate_date: today }],
+      usage_records: [
+        { organization_id: "qa-org", metric_code: "payments_processed", quantity: 99, period_start: today },
+        { organization_id: "real-org", metric_code: "payments_processed", quantity: 7, period_start: today },
+      ],
+    };
+    getSupabaseServiceClient.mockReturnValue({ from: (table: string) => ({ select: () => ({ range: async () => ({ data: rowsByTable[table] || [], error: null }) }) }) });
+    const { loadAdminMetrics } = await import("@/lib/admin/live");
+    const metrics = await loadAdminMetrics({ role: "admin", source: "supabase" });
+    expect(metrics.dataMode).toBe("live");
+    expect(metrics.users.map((user) => user.id)).toEqual(["customer"]);
+    expect(metrics.organizations.total).toBe(1);
+    expect(metrics.mrr.totalMrrCents).toBe(0);
+    expect(metrics.subscriptions.total).toBe(0);
+    expect(metrics.activity).toHaveLength(0);
+    expect(metrics.reconciliation.processed).toBe(7);
+  });
 });

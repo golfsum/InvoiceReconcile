@@ -2,6 +2,7 @@ import "server-only";
 
 import { buildAdminMetrics } from "@/lib/admin/aggregations";
 import { adminDemoMetrics } from "@/lib/admin/demo-data";
+import { filterAdminReportingRows } from "@/lib/admin/reporting-scope";
 import type {
   AcquisitionTrafficRecord,
   ActivitySeverity,
@@ -121,20 +122,27 @@ export async function loadAdminMetrics(operator: Pick<AppUser, "role" | "source"
   }
 
   try {
-    const [profiles, organizationsRaw, memberships, integrations, subscriptionsRaw, aggregates, events, usage, jobs, errors, feedbackRaw, contactRequestsRaw] = await Promise.all([
-      fetchAll("profiles", "id,email,display_name,signup_source,last_seen_at,created_at"),
-      fetchAll("organizations", "id,name,status,created_at"),
-      fetchAll("memberships", "organization_id,user_id,status"),
-      fetchAll("integrations", "organization_id,status"),
-      fetchAll("subscriptions", "id,organization_id,plan_code,status,billing_interval,unit_amount_minor,quantity,paid_started_at,created_at,canceled_at"),
-      fetchAll("analytics_daily_aggregates", "aggregate_date,organization_id,metric_code,metric_value,unique_users"),
-      fetchAll("analytics_events", "event_id,event_name,occurred_at,anonymous_id,session_id,user_id,organization_id,utm_source,referrer_host"),
-      fetchAll("usage_records", "id,organization_id,metric_code,period_start,quantity,recorded_at"),
-      fetchAll("background_jobs", "id,organization_id,status,job_type,error_summary,created_at"),
-      fetchAll("application_errors", "id,organization_id,error_code,severity,component,safe_message,resolved_at,created_at"),
-      fetchAll("feedback", "id,feedback_type,rating,message,status,created_at"),
-      fetchAll("contact_requests", "id,email,subject,message,status,delivery_status,created_at"),
-    ]);
+    const requests = [
+      ["profiles", "id,email,display_name,is_internal_admin,signup_source,last_seen_at,created_at"],
+      ["organizations", "id,name,status,created_by,created_at"],
+      ["memberships", "organization_id,user_id,status"],
+      ["integrations", "organization_id,status"],
+      ["subscriptions", "id,organization_id,plan_code,status,billing_interval,unit_amount_minor,quantity,paid_started_at,created_at,canceled_at"],
+      ["analytics_daily_aggregates", "aggregate_date,organization_id,metric_code,metric_value,unique_users"],
+      ["analytics_events", "event_id,event_name,occurred_at,anonymous_id,session_id,user_id,organization_id,utm_source,referrer_host"],
+      ["usage_records", "id,organization_id,metric_code,period_start,quantity,recorded_at"],
+      ["background_jobs", "id,organization_id,status,job_type,error_summary,created_at"],
+      ["application_errors", "id,user_id,organization_id,error_code,severity,component,safe_message,resolved_at,created_at"],
+      ["feedback", "id,user_id,organization_id,feedback_type,rating,message,status,created_at"],
+      ["contact_requests", "id,email,subject,message,status,delivery_status,created_at"],
+      ["admin_reporting_exclusions", "kind,subject_id"],
+    ] as const;
+    const raw = Object.fromEntries(await Promise.all(requests.map(async ([table, columns]) => [table, await fetchAll(table, columns)])));
+    const {
+      profiles, organizations: organizationsRaw, memberships, integrations, subscriptions: subscriptionsRaw,
+      analytics_daily_aggregates: aggregates, analytics_events: events, usage_records: usage,
+      background_jobs: jobs, application_errors: errors, feedback: feedbackRaw, contact_requests: contactRequestsRaw,
+    } = filterAdminReportingRows(raw, raw.admin_reporting_exclusions, process.env.ADMIN_EMAILS);
 
     const membershipByUser = new Map<string, string>();
     const memberCount = new Map<string, number>();
@@ -218,7 +226,7 @@ export async function loadAdminMetrics(operator: Pick<AppUser, "role" | "source"
     };
 
     const visitorRows = metricRows(aggregates, ["visitors", "unique_visitors"]);
-    for (const row of aggregates.filter((item) => item.organization_id === null)) {
+    for (const row of aggregates.filter((row) => row.organization_id === null)) {
       const target = ensureDay(dateValue(row.aggregate_date));
       const value = numberValue(row.metric_value);
       const code = stringValue(row.metric_code);
