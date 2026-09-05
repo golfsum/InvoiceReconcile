@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { readFile } from "node:fs/promises";
 import ExcelJS from "exceljs";
+import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { rejectOptionalAnalytics } from "./helpers";
 
@@ -11,6 +12,24 @@ const password = process.env.LAUNCH_QA_PASSWORD;
 const workspaceId = process.env.LAUNCH_QA_WORKSPACE_ID;
 test.skip(process.env.LAUNCH_QA_ENABLED !== "true" || !email || !password || !workspaceId,
   "An isolated launch QA workspace is required");
+
+test("saved billing summary is accessible and identifies the current plan", async ({ page }) => {
+  await page.goto("/auth/sign-in");
+  await rejectOptionalAnalytics(page);
+  await page.getByLabel("Email", { exact: true }).fill(email!);
+  await page.getByLabel("Password", { exact: true }).fill(password!);
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
+  await expect(page).toHaveURL(/\/app(?:\/|$)/);
+  await page.goto(`/app/${workspaceId}/settings`);
+  await expect(page.getByRole("combobox", { name: "Workspace", exact: true })).toHaveValue(workspaceId!);
+  await page.getByRole("link", { name: "Open billing", exact: true }).click();
+  await expect(page.getByRole("heading", { name: /^Current plan: (Free|Solo|Business|Bookkeeper)$/ })).toBeVisible();
+  await page.getByRole("link", { name: "Refresh billing status", exact: true }).click();
+  await expect(page.getByRole("region", { name: "Current billing status" })).toContainText("payments per month. Status:");
+  const accessibility = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze();
+  expect(accessibility.violations).toEqual([]);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+});
 
 test("private CSV/XLSX uploads reconcile and export through the live UI", async ({ page }) => {
   test.slow();

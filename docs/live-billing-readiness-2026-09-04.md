@@ -1,5 +1,7 @@
 # Live billing readiness, 4 September 2026
 
+Follow-up: [production launch verification](launch-verification-2026-09-04.md) records completed signup/reset, private imports and sandbox payment recovery checks after this initial pass. Live cutover is still gated.
+
 Status: not approved for live charges. Stripe remains in sandbox mode. Billing safeguards and email routing were deployed to production through commits `3e8df0e` and `29dee4f`. Deployment `dpl_AHaG1uwvEmyZ21LN7N9m8rAmSjqg` was verified READY and aliased to `invoicereconcile.com`. Postmark sending-domain verification, Vercel production email secrets and Supabase SMTP settings were configured with approval. No Stripe customers, subscriptions or accounting records were changed in this pass.
 
 ## Implemented safeguards

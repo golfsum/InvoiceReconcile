@@ -13,6 +13,19 @@ afterEach(() => {
 });
 
 describe("CheckoutButton", () => {
+  it("maps account migration to support without displaying provider details", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: "billing_account_migration_required", error: "private provider details" }), { status: 409 })));
+    render(<CheckoutButton plan="solo" label="Choose Solo" />);
+    fireEvent.click(screen.getByRole("button", { name: "Choose Solo" }));
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith(expect.stringMatching(/Contact support@invoicereconcile.com/)));
+  });
+
+  it("does not resolve inherited object properties as error messages", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ code: "toString" }), { status: 503 })));
+    render(<CheckoutButton plan="solo" label="Choose Solo" />);
+    fireEvent.click(screen.getByRole("button", { name: "Choose Solo" }));
+    await waitFor(() => expect(toastError).toHaveBeenCalledWith("Checkout is temporarily unavailable. Try again shortly."));
+  });
   it("maps a pending intent code to a safe recovery action", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({
       error: "untrusted server detail",
