@@ -12,7 +12,7 @@ export function ResourceArticlePage({ article }: { article: ResourceArticle }) {
     "@type": "Article",
     headline: article.title,
     description: article.description,
-    datePublished: article.updated,
+    datePublished: article.published || article.updated,
     dateModified: article.updated,
     mainEntityOfPage: url,
     author: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url },
@@ -35,14 +35,14 @@ export function ResourceArticlePage({ article }: { article: ResourceArticle }) {
         <div className="page-shell max-w-[1040px] py-12 lg:py-16">
           <Breadcrumbs items={[{ label: "Resources", href: "/resources" }, { label: article.title }]} />
           <div className="mt-10 max-w-3xl">
-            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><span className="text-brand">{article.category}</span><span aria-hidden="true">/</span><span>{article.readingMinutes} minute read</span><span aria-hidden="true">/</span><time dateTime={article.updated}>Updated August 23, 2026</time></div>
+            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.08em] text-muted"><span className="text-brand">{article.category}</span><span aria-hidden="true">/</span><span>{article.readingMinutes} minute read</span><span aria-hidden="true">/</span><time dateTime={article.updated}>Updated {new Intl.DateTimeFormat("en-US", { month: "long", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(`${article.updated}T00:00:00Z`))}</time></div>
             <h1 className="mt-4 text-balance text-4xl font-semibold tracking-[-0.035em] sm:text-5xl">{article.title}</h1>
             <p className="mt-6 text-lg leading-8 text-muted-strong">{article.intro}</p>
           </div>
         </div>
       </header>
       <article className="page-shell grid max-w-[1040px] gap-12 py-14 lg:grid-cols-[minmax(0,1fr)_240px] lg:py-20">
-        <div className="space-y-14">
+        <div className="min-w-0 space-y-14">
           {article.example ? (
             <section className="border bg-surface" aria-labelledby="worked-example">
               <div className="border-b px-5 py-4"><p className="text-xs font-bold uppercase tracking-[0.1em] text-muted">Worked example</p><h2 id="worked-example" className="mt-1 text-lg font-semibold">{article.example.label}</h2></div>
@@ -59,12 +59,21 @@ export function ResourceArticlePage({ article }: { article: ResourceArticle }) {
               <h2 className="text-2xl font-semibold tracking-[-0.02em]">{section.heading}</h2>
               <div className="mt-5 space-y-4 text-base leading-7 text-muted-strong">{section.paragraphs.map((paragraph) => <p key={paragraph}>{paragraph}</p>)}</div>
               {section.bullets ? <ul className="mt-6 border-y divide-y">{section.bullets.map((bullet) => <li className="flex gap-3 py-3 text-sm leading-6 text-muted-strong" key={bullet}><Check className="mt-0.5 size-4 shrink-0 text-success" />{bullet}</li>)}</ul> : null}
+              {section.table ? <div className="mt-6 overflow-x-auto rounded-sm border" tabIndex={0} role="region" aria-label={section.table.caption}>
+                <table className="w-full text-left text-sm">
+                  <caption className="p-4 text-left font-semibold">{section.table.caption}</caption>
+                  <thead className="border-y bg-surface-muted"><tr>{section.table.headers.map((header) => <th className="p-3 font-semibold" scope="col" key={header}>{header}</th>)}</tr></thead>
+                  <tbody className="divide-y">{section.table.rows.map((row) => <tr key={row[0]}>{row.map((cell, index) => index === 0 ? <th className="p-3 font-medium" scope="row" key={index}>{cell}</th> : <td className="p-3" key={index}>{cell}</td>)}</tr>)}</tbody>
+                </table>
+              </div> : null}
             </section>
           ))}
           <section className="border-l-2 border-brand bg-surface px-6 py-5">
             <h2 className="text-lg font-semibold">Key takeaways</h2>
             <ul className="mt-4 space-y-3">{article.takeaways.map((item) => <li className="flex gap-3 text-sm leading-6 text-muted-strong" key={item}><Check className="mt-0.5 size-4 shrink-0 text-success" />{item}</li>)}</ul>
           </section>
+          {article.sources?.length ? <section className="border-t pt-6"><h2 className="text-lg font-semibold">Sources and further reading</h2><ul className="mt-4 space-y-3">{article.sources.map((source) => <li key={source.href}><a className="text-sm text-brand underline underline-offset-4" href={source.href}>{source.label}</a></li>)}</ul></section> : null}
+          {article.nextSteps?.length ? <section className="border bg-brand-soft p-6"><h2 className="text-xl font-semibold">Try the payment-matching step</h2><p className="mt-3 text-sm leading-6 text-muted-strong">InvoiceReconcile helps compare invoice and payment files. It does not reconcile your general ledger or automatically post to your books.</p><div className="mt-4 flex flex-wrap gap-4">{article.nextSteps.map((step) => <Link className="text-sm font-semibold text-brand underline underline-offset-4" href={step.href} key={step.href}>{step.label}</Link>)}</div></section> : null}
           <p className="border-t pt-5 text-xs leading-5 text-muted">This material is general educational information, not accounting, tax, legal, or investment advice. Verify financial records and consult the appropriate professional for decisions that require judgment.</p>
         </div>
         <aside className="lg:sticky lg:top-24 lg:self-start">

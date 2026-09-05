@@ -7,6 +7,7 @@ const groups = [
     title: "Product",
     links: [
       ["Product", "/product"],
+      ["Invoice reconciliation", "/invoice-reconciliation-software"],
       ["Pricing", "/pricing"],
       ["Security", "/security"],
       ["Sign in", "/auth/sign-in"],
@@ -15,10 +16,12 @@ const groups = [
   {
     title: "Solutions",
     links: [
+      ["All solutions", "/solutions"],
       ["Bookkeepers", "/solutions/bookkeepers"],
       ["Accounting firms", "/solutions/accounting-firms"],
       ["Small business", "/solutions/small-business"],
       ["Excel workflows", "/excel-invoice-reconciliation"],
+      ["Industries", "/industries"],
     ],
   },
   {
@@ -34,6 +37,7 @@ const groups = [
     title: "Company",
     links: [
       ["Resources", "/resources"],
+      ["AR reconciliation", "/accounts-receivable-reconciliation"],
       ["Contact", "/contact"],
       ["Privacy", "/privacy"],
       ["Terms", "/terms"],

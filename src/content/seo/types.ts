@@ -2,6 +2,7 @@ export type SeoSection = {
   heading: string;
   paragraphs: string[];
   bullets?: string[];
+  table?: { caption: string; headers: string[]; rows: string[][] };
 };
 
 export type ReconciliationExample = {
@@ -35,6 +36,9 @@ export type ResourceArticle = {
   category: "How-to" | "Explainer" | "Checklist";
   readingMinutes: number;
   updated: string;
+  published?: string;
+  sources?: Array<{ href: string; label: string }>;
+  nextSteps?: Array<{ href: string; label: string }>;
   intro: string;
   sections: SeoSection[];
   example?: ReconciliationExample;

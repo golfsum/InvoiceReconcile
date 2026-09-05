@@ -210,7 +210,7 @@ export function AudienceLandingPage({ page, section }: { page: AudiencePage; sec
       <JsonLd value={breadcrumb} />
       <section className="border-b bg-surface">
         <div className="page-shell py-14 lg:py-20">
-          <Breadcrumbs items={[{ label: section }, { label: page.title }]} />
+          <Breadcrumbs items={[{ label: section, href: `/${section.toLowerCase()}` }, { label: page.title }]} />
           <div className="mt-10 grid gap-12 lg:grid-cols-[minmax(0,1fr)_420px]">
             <div>
               <p className="eyebrow">{page.eyebrow}</p>

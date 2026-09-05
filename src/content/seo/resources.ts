@@ -1,6 +1,8 @@
 import type { ResourceArticle } from "./types";
+import { workedExamples } from "./worked-examples";
 
 export const resources: ResourceArticle[] = [
+  ...workedExamples,
   {
     slug: "how-to-reconcile-customer-payments-to-invoices",
     title: "How to reconcile customer payments to invoices",
@@ -116,12 +118,14 @@ export const resources: ResourceArticle[] = [
   },
   {
     slug: "accounts-receivable-reconciliation-explained",
-    title: "Accounts receivable reconciliation explained",
+    title: "Accounts receivable reconciliation: meaning and process",
     description: "Understand AR reconciliation, customer payment application, the control account, aging, unapplied cash, and common exceptions.",
     category: "Explainer",
     readingMinutes: 8,
-    updated: "2026-08-23",
-    intro: "Accounts receivable reconciliation supports confidence that customer balances are complete, accurate, and connected to the accounting records. Incoming payment matching is an important operational step, but it is not the whole control.",
+    updated: "2026-09-05",
+    published: "2026-08-23",
+    intro: "Accounts receivable reconciliation is the process of checking that customer invoice balances, payments, credits, and the general ledger agree for the same period. It includes payment application, a review of open balances, and investigation of any subledger-to-ledger differences. Incoming payment matching is one part of that process, not the whole control.",
+    nextSteps: [{ href: "/resources/accounts-receivable-reconciliation-example", label: "Follow the $12,000 to $8,000 worked example" }, { href: "/accounts-receivable-reconciliation", label: "See the payment-matching workflow" }],
     sections: [
       { heading: "What sits inside accounts receivable", paragraphs: ["The AR subledger contains customer invoices, receipts, credits, adjustments, and remaining balances. The general ledger usually contains a receivables control account. A period-end process may need to tie the subledger total to that control account and investigate differences.", "Aging reports organize open balances by age, while payment application explains which receipts reduced which invoices. Unapplied cash and customer credits need separate review."] },
       { heading: "Payment matching versus AR reconciliation", paragraphs: ["Payment matching compares incoming receipts with open invoice balances and creates proposed applications. AR reconciliation also considers completeness, posting, cutoff, credit memos, write-offs, foreign currency, and the relationship between subsidiary and general ledger records.", "A matching tool can prepare evidence and exceptions, but accounting judgment and final ledger review remain with the business."] },
@@ -135,13 +139,16 @@ export const resources: ResourceArticle[] = [
   },
   {
     slug: "cash-application-explained-for-small-businesses",
-    title: "Cash application explained for small businesses",
-    description: "A plain-language guide to applying customer receipts, handling exceptions, and keeping the accounting system in control.",
+    title: "What is cash application? Meaning, process and examples",
+    description: "Cash application means allocating customer payments to invoices. See a simple example, the steps involved, and how it differs from bank reconciliation.",
     category: "Explainer",
     readingMinutes: 7,
-    updated: "2026-08-23",
+    updated: "2026-09-05",
+    published: "2026-08-23",
+    nextSteps: [{ href: "/resources/accounts-receivable-reconciliation-example", label: "See the AR balance example" }, { href: "/tools/invoice-payment-matcher", label: "Try the free payment matcher" }, { href: "/auth/sign-up", label: "Start matching your files" }],
     intro: "Cash application means assigning incoming customer money to the invoices or account balances it is intended to settle. Small businesses often do this inside the accounting system, in a spreadsheet, or through a combination of bank and billing exports.",
     sections: [
+      { heading: "Cash application versus bank reconciliation and collections", paragraphs: ["These processes answer different questions. Collections follows up on money still owed. Cash application allocates money already received. Bank reconciliation checks the recorded bank balance against the bank statement and explains differences. A payment can reach the bank before anyone knows which invoices it should settle."], table: { caption: "Three related processes, three different questions", headers: ["Process", "Question", "Example"], rows: [["Collections", "What still needs to be paid?", "Follow up on an overdue $1,250 invoice"], ["Cash application", "Which balance does this receipt settle?", "Allocate a $1,250 ACH to INV-10487"], ["Bank reconciliation", "Do bank records and the books agree?", "Explain a deposit recorded in a different period"]] } },
       { heading: "The basic information flow", paragraphs: ["The invoice system says what customers owe. The bank or payment processor says what money arrived. Remittance advice says what the customer intended to pay. Cash application brings these records together and creates a reviewed allocation.", "When the customer pays through a tightly linked payment channel, much of the information may already travel together. External ACH, wires, checks, and processor deposits often require more investigation."] },
       { heading: "A clean payment is straightforward", paragraphs: ["Suppose invoice INV-10487 has $1,250 outstanding and an ACH for $1,250 includes INV10487 in its memo. After checking customer, currency, date, and duplicate status, the evidence supports a strong one-to-one application.", "The confirmation should still record the source transaction and reviewer. Strong automation shortens the review, but it does not erase accountability."] },
       { heading: "The difficult cases", paragraphs: ["One receipt can pay several invoices. Several receipts can settle one invoice. A customer can pay partially, overpay, deduct an amount, omit a reference, or use a different legal entity name. A processor can combine receipts and subtract fees.", "These are normal operating exceptions, not reasons to hide a difference. A useful queue gives each case a factual explanation and a set of deliberate actions."], bullets: ["Exact and reference matches", "Combined and partial applications", "Fees, deductions, and overpayments", "Payer name variations and missing references", "Duplicates and unresolved receipts"] },

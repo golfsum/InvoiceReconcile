@@ -194,6 +194,7 @@ export const landingPages: Record<string, SeoPage> = {
     checklist: ["Confirm the reconciliation period and cutoff.", "Tie customer applications to bank or processor evidence.", "Review unapplied cash, credits, and negative balances.", "Reconcile the AR subledger to the general ledger separately."],
     related: [
       { href: "/resources/accounts-receivable-reconciliation-explained", label: "AR reconciliation explained", description: "Use the detailed checklist and see how the control account fits." },
+      { href: "/resources/accounts-receivable-reconciliation-example", label: "Worked AR reconciliation example", description: "Follow invoice balances, cash applications, a credit memo, and a ledger difference." },
       { href: "/cash-application-automation", label: "Cash application automation", description: "Focus on the operational step of applying receipts." },
       { href: "/payment-reconciliation-for-small-business", label: "Small business workflow", description: "See a lighter process for teams without a dedicated AR department." },
     ],
