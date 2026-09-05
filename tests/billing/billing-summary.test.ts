@@ -32,7 +32,7 @@ describe("billing summary", () => {
   });
   it.each(["unpaid", "incomplete", "paused", "canceled"])("shows Free access for %s", async (status) => {
     single.mockResolvedValue({ data: { ...row, status }, error: null });
-    expect(await loadBillingSummary(user)).toMatchObject({ ok: true, plan: { key: "free" }, hasSubscription: status !== "canceled" });
+    expect(await loadBillingSummary(user)).toMatchObject({ ok: true, plan: { key: "free", paymentLimit: 20 }, hasSubscription: status !== "canceled" });
   });
   it("retains the paid plan during past-due grace", async () => {
     single.mockResolvedValue({ data: { ...row, status: "past_due" }, error: null });
@@ -40,7 +40,7 @@ describe("billing summary", () => {
   });
   it("uses Free only for a successful empty read", async () => {
     single.mockResolvedValue({ data: null, error: null });
-    expect(await loadBillingSummary(user)).toMatchObject({ ok: true, plan: { key: "free" }, hasSubscription: false });
+    expect(await loadBillingSummary(user)).toMatchObject({ ok: true, plan: { key: "free", paymentLimit: 20 }, hasSubscription: false });
     single.mockResolvedValue({ data: null, error: { message: "private error" } });
     expect(await loadBillingSummary(user)).toEqual({ ok: false, code: "billing_storage_unavailable" });
   });

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowRight, Check, ChevronRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { siteConfig } from "@/lib/config";
+import { FREE_MONTHLY_PAYMENT_LIMIT, siteConfig } from "@/lib/config";
 import type { AudiencePage, ReconciliationExample, SeoPage } from "./types";
 
 export function canonicalMetadata(title: string, description: string, path: string): Metadata {
@@ -118,7 +118,7 @@ export function SeoLandingPage({ page }: { page: SeoPage }) {
                 <Link href="/auth/sign-up" className={buttonVariants({ variant: "primary", size: "lg" })}>{page.cta}</Link>
                 <Link href="/app/demo" className={buttonVariants({ variant: "secondary", size: "lg" })}>Try sample data</Link>
               </div>
-              <p className="mt-3 text-xs text-muted">50 payments per month free. No credit card or accounting connection required.</p>
+              <p className="mt-3 text-xs text-muted">{FREE_MONTHLY_PAYMENT_LIMIT} payments per month free. No credit card or accounting connection required.</p>
             </div>
             <ExampleLedger example={page.example} />
           </div>
@@ -172,7 +172,7 @@ export function SeoLandingPage({ page }: { page: SeoPage }) {
 
       <section className="border-t bg-brand-soft">
         <div className="page-shell grid gap-6 py-12 sm:grid-cols-[1fr_auto] sm:items-center">
-          <div><h2 className="text-2xl font-semibold tracking-tight">Try this workflow on your next reconciliation.</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-muted-strong">Start with 50 payments per month, including CSV/XLSX imports, exception review, and exports. Upgrade when you need more volume, client workspaces, or custom rules.</p><Link href="/pricing" className="mt-3 inline-block text-sm font-semibold text-brand hover:underline">Compare plans from $19/month</Link></div>
+          <div><h2 className="text-2xl font-semibold tracking-tight">Try this workflow on your next reconciliation.</h2><p className="mt-3 max-w-2xl text-sm leading-6 text-muted-strong">Start with {FREE_MONTHLY_PAYMENT_LIMIT} payments per month, including CSV/XLSX imports, exception review, and exports. Upgrade when you need more volume, client workspaces, or custom rules.</p><Link href="/pricing" className="mt-3 inline-block text-sm font-semibold text-brand hover:underline">Compare plans from $19/month</Link></div>
           <Link href="/auth/sign-up" className={buttonVariants({ variant: "primary", size: "lg" })}>Start my free workspace <ArrowRight className="size-4" /></Link>
         </div>
       </section>

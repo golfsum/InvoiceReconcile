@@ -5,7 +5,7 @@ const loadSummary = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/billing/summary", () => ({ loadBillingSummary: loadSummary }));
 const freeSummary = {
   ok: true, organizationId: "10000000-0000-4000-8000-000000000001",
-  plan: { key: "free", name: "Free", paymentLimit: 50 }, status: "active",
+  plan: { key: "free", name: "Free", paymentLimit: 20 }, status: "active",
   hasBillingAccount: false, hasSubscription: false, cancelAtPeriodEnd: false, periodEndsAt: null,
 };
 beforeEach(() => loadSummary.mockResolvedValue(freeSummary));

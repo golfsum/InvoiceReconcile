@@ -20,12 +20,12 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { buttonVariants } from "@/components/ui/button";
 import { canonicalMetadata, JsonLd } from "@/content/seo/seo-components";
 import { northstarInvoices, northstarPayments } from "@/lib/reconciliation/fixtures/northstar";
-import { plans, siteConfig } from "@/lib/config";
+import { FREE_MONTHLY_PAYMENT_LIMIT, plans, siteConfig } from "@/lib/config";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = canonicalMetadata(
   "Invoice Reconciliation Software for Bookkeepers",
-  "Match CSV and Excel payments to invoices, including lump sums, partials and fees. Review the evidence and export results. Start free with 50 payments per month.",
+  `Match CSV and Excel payments to invoices, including lump sums, partials and fees. Review the evidence and export results. Start free with ${FREE_MONTHLY_PAYMENT_LIMIT} payments per month.`,
   "/",
 );
 
@@ -102,12 +102,12 @@ export default function Home() {
             <h1 className="mt-5 max-w-3xl text-balance text-[2.7rem] font-semibold leading-[1.03] tracking-[-0.055em] sm:text-6xl lg:text-[4.2rem]">Stop matching invoice payments by hand.</h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-strong sm:text-xl">Turn invoice and bank exports into suggested matches, a clear exception list, and a reviewable record. Handle combined payments, partials, and fees without replacing your accounting software.</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/auth/sign-up" className={buttonVariants({ variant: "primary", size: "lg" })}>Reconcile 50 payments free <ArrowRight className="size-4" /></Link>
+              <Link href="/auth/sign-up" className={buttonVariants({ variant: "primary", size: "lg" })}>Reconcile {FREE_MONTHLY_PAYMENT_LIMIT} payments free <ArrowRight className="size-4" /></Link>
               <Link href="/app/demo" className={buttonVariants({ variant: "secondary", size: "lg" })}>Try it without signing up</Link>
             </div>
             <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
               <span className="inline-flex items-center gap-2"><Check className="size-4 text-success" /> No credit card required</span>
-              <span className="inline-flex items-center gap-2"><Check className="size-4 text-success" /> 50 payments every month</span>
+              <span className="inline-flex items-center gap-2"><Check className="size-4 text-success" /> {FREE_MONTHLY_PAYMENT_LIMIT} payments every month</span>
               <span className="inline-flex items-center gap-2"><Check className="size-4 text-success" /> You confirm every result</span>
             </div>
           </div>
@@ -230,7 +230,7 @@ export default function Home() {
 
       <section className="bg-[#173d2e] py-16 text-white sm:py-20">
         <div className="page-shell grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
-          <div><p className="text-xs font-bold uppercase tracking-[0.12em] text-[#9cdfbd]">Start with your files</p><h2 className="mt-4 max-w-3xl text-balance text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">Bring the spreadsheet you reconcile every month.</h2><p className="mt-4 max-w-2xl text-base leading-7 text-[#c8dbd2]">Start with 50 payments per month free, including matching, review, and exports. Upgrade when you need more payments, client workspaces, or custom rules.</p></div>
+          <div><p className="text-xs font-bold uppercase tracking-[0.12em] text-[#9cdfbd]">Start with your files</p><h2 className="mt-4 max-w-3xl text-balance text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">Bring the spreadsheet you reconcile every month.</h2><p className="mt-4 max-w-2xl text-base leading-7 text-[#c8dbd2]">Start with {FREE_MONTHLY_PAYMENT_LIMIT} payments per month free, including matching, review, and exports. Upgrade when you need more payments, client workspaces, or custom rules.</p></div>
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col"><Link href="/auth/sign-up" className="inline-flex min-h-12 items-center justify-center gap-2 border border-white bg-white px-5 font-semibold text-[#173d2e] hover:bg-[#eff7f3]">Start free <ArrowRight className="size-4" /></Link><Link href="/contact" className="inline-flex min-h-12 items-center justify-center border border-white/35 px-5 font-semibold hover:border-white">Ask about a file</Link></div>
         </div>
       </section>

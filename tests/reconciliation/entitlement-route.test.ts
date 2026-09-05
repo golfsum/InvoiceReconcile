@@ -69,8 +69,8 @@ describe("reconciliation entitlement route", () => {
       allowed: false,
       code: "payment_limit_exceeded",
       plan: "free",
-      limit: 50,
-      used: 50,
+      limit: 20,
+      used: 20,
       requested: 1,
       remaining: 0,
       period_start: "2026-08-01",
@@ -90,7 +90,7 @@ describe("reconciliation entitlement route", () => {
       code: "payment_limit_exceeded",
       upgradeRequired: true,
       upgradeUrl: "/settings/billing",
-      entitlement: { plan: "free", limit: 50, used: 50, requested: 1, remaining: 0 },
+      entitlement: { plan: "free", limit: 20, used: 20, requested: 1, remaining: 0 },
     });
     expect(client.rpc.mock.calls.map(([name]) => name)).toEqual([
       "get_reconciliation_import_context",

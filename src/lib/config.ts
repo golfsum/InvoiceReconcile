@@ -7,12 +7,14 @@ export const siteConfig = {
     "Incoming payment reconciliation for bookkeepers, accounting firms, and small finance teams.",
 } as const;
 
+export const FREE_MONTHLY_PAYMENT_LIMIT = 20;
+
 export const plans = [
   {
     key: "free",
     name: "Free",
     price: 0,
-    paymentLimit: 50,
+    paymentLimit: FREE_MONTHLY_PAYMENT_LIMIT,
     description: "Test a real reconciliation workflow without a card.",
     features: ["1 workspace", "CSV and XLSX import", "Matching and exception review", "Reconciliation history", "CSV and XLSX export"],
   },

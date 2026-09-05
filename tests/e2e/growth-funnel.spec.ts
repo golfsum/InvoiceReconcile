@@ -19,7 +19,7 @@ test("homepage has search metadata and a truthful path into sample exceptions", 
   await expect(page).toHaveTitle("Invoice Reconciliation Software for Bookkeepers | InvoiceReconcile");
   await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /^https:\/\/invoicereconcile\.com\/?$/);
   await expect(page.locator('meta[property="og:title"]')).toHaveAttribute("content", await page.title());
-  await expect(page.getByRole("link", { name: "Reconcile 50 payments free" })).toHaveAttribute("href", "/auth/sign-up");
+  await expect(page.getByRole("link", { name: "Reconcile 20 payments free" })).toHaveAttribute("href", "/auth/sign-up");
   await expect(page.getByText("Most popular", { exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Reject analytics", exact: true }).click();
   const privacy = page.getByRole("button", { name: "Privacy choices", exact: true });
@@ -64,6 +64,13 @@ test("every sitemap page is crawlable with unique metadata and one canonical", a
 
 test("plan recommendation handles volume, workspaces, features, invalid and overflow input", async ({ page }) => {
   await page.goto("/pricing");
+  await expect(page.getByRole("heading", { name: "Free: $0/month" })).toBeVisible();
+  await expect(page.getByLabel("Payments per month", { exact: true })).toHaveValue("20");
+  await expect(page.locator("article").first()).toContainText("20 payments per month");
+  await expect(page.getByRole("row", { name: "Payments per month 20 500 2,500 10,000" })).toBeVisible();
+  await page.getByLabel("Payments per month", { exact: true }).fill("21");
+  await expect(page.getByRole("heading", { name: "Solo: $19/month" })).toBeVisible();
+  await page.getByLabel("Payments per month", { exact: true }).fill("20");
   await expect(page.getByRole("heading", { name: "Free: $0/month" })).toBeVisible();
   await page.getByLabel("Payments per month", { exact: true }).fill("500");
   await expect(page.getByRole("heading", { name: "Solo: $19/month" })).toBeVisible();

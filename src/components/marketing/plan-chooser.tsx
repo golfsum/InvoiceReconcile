@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+import { FREE_MONTHLY_PAYMENT_LIMIT } from "@/lib/config";
 import { recommendPlan } from "@/lib/billing/plan-recommendation";
 
 export function PlanChooser() {
-  const [payments, setPayments] = useState("50");
+  const [payments, setPayments] = useState(String(FREE_MONTHLY_PAYMENT_LIMIT));
   const [workspaces, setWorkspaces] = useState("1");
   const [customRules, setCustomRules] = useState(false);
   const valid = /^\d+$/.test(payments) && /^\d+$/.test(workspaces) && Number(workspaces) >= 1;

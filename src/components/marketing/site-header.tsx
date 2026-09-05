@@ -22,14 +22,14 @@ export function SiteHeader() {
     <header className="sticky top-0 z-50 border-b bg-background">
       <div className="page-shell flex h-16 items-center justify-between gap-5">
         <BrandLogo />
-        <nav aria-label="Primary navigation" className="hidden items-center gap-1 md:flex">
+        <nav aria-label="Primary navigation" className="hidden items-center gap-1 lg:flex">
           {navigation.map((item) => (
             <Link key={item.href} href={item.href} className="px-3 py-2 text-sm font-medium text-muted-strong hover:text-foreground">
               {item.label}
             </Link>
           ))}
         </nav>
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-2 lg:flex">
           <ThemeToggle />
           <Link href="/auth/sign-in" className={buttonVariants({ variant: "quiet", size: "sm" })}>
             Sign in
@@ -40,7 +40,7 @@ export function SiteHeader() {
         </div>
         <button
           type="button"
-          className="inline-flex size-10 items-center justify-center border bg-surface md:hidden"
+          className="inline-flex size-10 items-center justify-center border bg-surface lg:hidden"
           aria-expanded={open}
           aria-controls="mobile-navigation"
           aria-label={open ? "Close navigation" : "Open navigation"}
@@ -49,7 +49,7 @@ export function SiteHeader() {
           {open ? <X className="size-5" /> : <Menu className="size-5" />}
         </button>
       </div>
-      <div id="mobile-navigation" className={cn("border-t bg-background md:hidden", open ? "block" : "hidden")}>
+      <div id="mobile-navigation" className={cn("border-t bg-background lg:hidden", open ? "block" : "hidden")}>
         <nav aria-label="Mobile navigation" className="page-shell flex flex-col py-4">
           {navigation.map((item) => (
             <Link key={item.href} href={item.href} className="border-b py-3 text-sm font-semibold" onClick={() => setOpen(false)}>
