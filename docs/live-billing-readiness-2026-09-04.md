@@ -1,6 +1,6 @@
 # Live billing readiness, 4 September 2026
 
-Status: not approved for live charges. Stripe remains in sandbox mode. Billing safeguards and email routing are prepared for deployment. Postmark sending-domain verification, Vercel production email secrets and Supabase SMTP settings were configured with approval. No Stripe customers, subscriptions or accounting records were changed in this pass.
+Status: not approved for live charges. Stripe remains in sandbox mode. Billing safeguards and email routing were deployed to production through commits `3e8df0e` and `29dee4f`. Deployment `dpl_AHaG1uwvEmyZ21LN7N9m8rAmSjqg` was verified READY and aliased to `invoicereconcile.com`. Postmark sending-domain verification, Vercel production email secrets and Supabase SMTP settings were configured with approval. No Stripe customers, subscriptions or accounting records were changed in this pass.
 
 ## Implemented safeguards
 
@@ -52,11 +52,11 @@ The supplied Postmark server `19806005` has an active transactional `invoicereco
 
 The stream's server may also serve AppsResolve. Do not rename it, rotate shared tokens or change its other streams. Select the InvoiceReconcile stream explicitly.
 
-Supabase Auth custom SMTP was enabled and saved for project `ajhfuduvxuemjloepfra`: `smtp.postmarkapp.com`, port `587`, using a newly generated stream-specific SMTP Access Key and Secret Key for `invoicereconcile`. Email confirmation remains enabled. Actual signup/reset delivery still needs verification; a successful settings save is not proof of that flow. See [Postmark SMTP configuration](https://postmarkapp.com/developer/user-guide/send-email-with-smtp) and [Supabase custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
+Supabase Auth custom SMTP was enabled and saved for project `ajhfuduvxuemjloepfra`: `smtp.postmarkapp.com`, port `587`, using a newly generated stream-specific SMTP Access Key and Secret Key for `invoicereconcile`. Email confirmation remains enabled. The production forgot-password form successfully sent a reset message through this stream, and Postmark recorded delivery to the user's Gmail address. Its actual Reply-To header was `support@`, with link/open tracking disabled. No password was changed. Fresh signup confirmation and completing the reset-link flow remain unverified. See [Postmark SMTP configuration](https://postmarkapp.com/developer/user-guide/send-email-with-smtp) and [Supabase custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
 
 Automated messages use `notifications@` with a default Reply-To of `support@`. Only the explicit General enquiry contact-form topic and its acknowledgement replies use `contact@`. Product, account, billing, privacy, security, legal, omitted and unknown topics stay with `support@`. A Postmark sender signature also sets the notification sender's default Reply-To to `support@`. No notification inbox was created. Migadu MX, SPF, DKIM and DMARC were preserved. Support inbox/forwarding access remains a separate check.
 
-The local application email sender passed a real Postmark delivery test, confirmed by the user. Application link/open tracking is disabled. The production contact-form path still needs a post-deployment smoke test. AppsResolve settings and shared Postmark tokens were not rotated.
+The local application email sender passed a real Postmark delivery test, confirmed by the user. Production contact-form submissions were then tested for both General enquiry and Product or import help. Both displayed success; Postmark recorded delivery to `contact@` and `support@`, respectively, and their acknowledgements had the matching Reply-To addresses. Production logs confirmed the general request was stored and sent via Postmark. The two clearly marked setup-test contact records were retained. No error/fatal logs were found for the tested deployment in the 15-minute post-deployment scan. Application link/open tracking is disabled. AppsResolve settings and shared Postmark tokens were not rotated.
 
 ## Live cutover gates
 
