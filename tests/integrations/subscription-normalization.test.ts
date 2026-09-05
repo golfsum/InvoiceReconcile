@@ -63,6 +63,20 @@ describe("Stripe subscription normalization", () => {
     expect(normalizeStripeSubscription(subscriptionFixture()).ok).toBe(true);
   });
 
+  it("recognizes portal cancellation scheduled at the current period end", async () => {
+    const { normalizeStripeSubscription } = await import("@/lib/billing/subscriptions");
+    const fixture = subscriptionFixture();
+    fixture.cancel_at = fixture.items.data[0].current_period_end;
+    expect(normalizeStripeSubscription(fixture)).toMatchObject({ ok: true, value: { cancelAtPeriodEnd: true } });
+    fixture.cancel_at += 86400;
+    expect(normalizeStripeSubscription(fixture)).toMatchObject({ ok: true, value: { cancelAtPeriodEnd: false } });
+  });
+
+  it.each(["active", "past_due", "unpaid", "paused", "canceled"] as const)("preserves %s for entitlement decisions", async (status) => {
+    const { normalizeStripeSubscription } = await import("@/lib/billing/subscriptions");
+    expect(normalizeStripeSubscription(subscriptionFixture("price_solo_test", status))).toMatchObject({ ok: true, value: { status } });
+  });
+
   it("does not label an incomplete subscription as paid", async () => {
     const { normalizeStripeSubscription } = await import("@/lib/billing/subscriptions");
     expect(normalizeStripeSubscription(subscriptionFixture("price_solo_test", "incomplete"))).toMatchObject({

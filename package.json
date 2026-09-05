@@ -15,6 +15,7 @@
     "benchmark:engine": "tsx scripts/benchmark-matching-engine.ts",
     "check:copy": "node scripts/check-copy.mjs",
     "check:env": "node --conditions=react-server --import tsx scripts/check-env.ts",
+    "check:billing": "node --conditions=react-server --import tsx scripts/check-billing-readiness.ts",
     "check": "npm run check:copy && npm run lint && npm run typecheck && npm run test && npm run build",
     "check:release": "npm run check:env && npm run check && npm run test:e2e"
   },

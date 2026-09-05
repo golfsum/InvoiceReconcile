@@ -2,6 +2,7 @@ import type Stripe from "stripe";
 import { NextResponse } from "next/server";
 import { getStripeClient, getStripeWebhookSecret } from "@/lib/billing/stripe";
 import { markCheckoutIntentCompleted } from "@/lib/billing/checkout-intents";
+import { stripeObjectMatchesMode } from "@/lib/billing/mode";
 import {
   findOrganizationForSubscription,
   normalizeStripeSubscription,
@@ -83,6 +84,10 @@ export async function POST(request: Request) {
     event = stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
   } catch {
     return NextResponse.json({ error: "Invalid Stripe signature" }, { status: 400 });
+  }
+
+  if (!stripeObjectMatchesMode(event)) {
+    return NextResponse.json({ error: "Stripe event mode does not match this environment" }, { status: 400 });
   }
 
   try {

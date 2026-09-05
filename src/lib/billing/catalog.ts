@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { stripeBillingMode } from "@/lib/billing/mode";
 
 export const paidPlanSchema = z.enum(["solo", "business", "bookkeeper"]);
 export type PaidPlanKey = z.infer<typeof paidPlanSchema>;
@@ -35,7 +36,7 @@ export type StripePriceShape = {
   active: boolean;
   currency: string;
   id: string;
-  recurring: { interval: string } | null;
+  recurring: { interval: string; intervalCount?: number } | null;
   unitAmount: number | null;
 };
 
@@ -45,7 +46,7 @@ export function configuredPriceId(plan: PaidPlanKey, environment: NodeJS.Process
 
 export function isBillingConfigured(environment: NodeJS.ProcessEnv = process.env) {
   return Boolean(
-    environment.STRIPE_SECRET_KEY?.trim()
+    stripeBillingMode(environment)
     && environment.STRIPE_WEBHOOK_SECRET?.trim()
     && environment.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY?.trim()
     && configuredPriceId("solo", environment)
@@ -71,6 +72,7 @@ export function validateStripePrice(
   }
   if (price.currency.toLowerCase() !== "usd") return { valid: false as const, reason: "currency_mismatch" };
   if (price.recurring?.interval !== "month") return { valid: false as const, reason: "interval_mismatch" };
+  if ((price.recurring.intervalCount ?? 1) !== 1) return { valid: false as const, reason: "interval_count_mismatch" };
   if (price.unitAmount !== expected.monthlyAmountMinor) {
     return { valid: false as const, reason: "amount_mismatch" };
   }

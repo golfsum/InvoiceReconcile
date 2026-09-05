@@ -24,6 +24,7 @@ function validEnvironment(): Record<string, string> {
     SUPABASE_SERVICE_ROLE_KEY: supabaseServiceRoleFixture,
     UPSTASH_REDIS_REST_URL: "https://model-bison-12345.upstash.io",
     UPSTASH_REDIS_REST_TOKEN: "upstash_token_1234567890",
+    STRIPE_BILLING_MODE: "live",
     STRIPE_SECRET_KEY: stripeLiveSecretFixture,
     NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_live_1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ",
     STRIPE_WEBHOOK_SECRET: stripeWebhookSecretFixture,
@@ -42,8 +43,19 @@ function validEnvironment(): Record<string, string> {
 }
 
 describe("production environment validation", () => {
+  it("reports malformed URLs instead of throwing or echoing their contents", () => {
+    const environment = { ...validEnvironment(), NEXT_PUBLIC_APP_URL: "private-invalid-value", UPSTASH_REDIS_REST_URL: "" };
+    const result = validateProductionEnvironment(environment);
+    expect(result.success).toBe(false);
+    if (result.success) return;
+    expect(formatProductionEnvironmentIssues(result.error.issues).join(" ")).not.toContain("private-invalid-value");
+  });
   it("accepts a complete production environment", () => {
     expect(validateProductionEnvironment(validEnvironment()).success).toBe(true);
+  });
+
+  it("accepts the separate notifications sender and contact inbox", () => {
+    expect(validateProductionEnvironment({ ...validEnvironment(), POSTMARK_FROM_EMAIL: "notifications@invoicereconcile.com", CONTACT_NOTIFICATION_EMAIL: "contact@invoicereconcile.com" }).success).toBe(true);
   });
 
   it("reports missing release services by variable name without echoing values", () => {

@@ -1,6 +1,6 @@
 import "server-only";
 
-import { ServerClient } from "postmark";
+import { ServerClient, Models } from "postmark";
 import { z } from "zod";
 import { siteConfig } from "@/lib/config";
 
@@ -58,10 +58,11 @@ export async function sendTransactionalEmail(input: TransactionalEmail): Promise
       Subject: input.subject.replace(/[\r\n]+/g, " ").slice(0, 200),
       TextBody: input.textBody,
       HtmlBody: input.htmlBody,
-      ReplyTo: replyTo?.success ? replyTo.data : undefined,
+      ReplyTo: replyTo?.success ? replyTo.data : siteConfig.supportEmail,
       Tag: tag.data,
       MessageStream: process.env.POSTMARK_MESSAGE_STREAM?.trim() || "outbound",
       TrackOpens: false,
+      TrackLinks: Models.LinkTrackingOptions.None,
     });
     return { delivered: true, mode: "postmark", messageId: response.MessageID };
   } catch {

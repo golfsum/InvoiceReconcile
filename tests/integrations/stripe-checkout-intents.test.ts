@@ -52,6 +52,7 @@ function subscriptionQuery(customerId: string | null = null) {
 function openSession() {
   return {
     id: sessionId,
+    livemode: false,
     mode: "subscription",
     client_reference_id: organizationId,
     metadata: { organizationId, plan: "solo", userId: "user-1" },
@@ -64,6 +65,9 @@ function openSession() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.stubEnv("STRIPE_BILLING_MODE", "test");
+  vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_fixture");
+  vi.stubEnv("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY", "pk_test_fixture");
   getCurrentUser.mockResolvedValue({
     id: "user-1",
     email: "owner@example.com",
@@ -74,11 +78,39 @@ beforeEach(() => {
 });
 
 afterEach(async () => {
+  vi.unstubAllEnvs();
   const { __resetMemoryRateLimitsForTests } = await import("@/lib/rate-limit");
   __resetMemoryRateLimitsForTests();
 });
 
 describe("Stripe Checkout intent boundary", () => {
+  it("does not create a replacement subscription for a missing legacy customer", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: {
+      allowed: true, status: "claimed", intent_id: intentId, lease_token: leaseToken, plan: "solo", provider_price_id: priceId,
+    }, error: null });
+    resolveBillingOrganization.mockResolvedValue({ ok: true, organizationId, supabase: { ...subscriptionQuery("cus_legacy"), rpc } });
+    const create = vi.fn();
+    getStripeClient.mockReturnValue({ checkout: { sessions: { create } }, customers: { retrieve: vi.fn().mockRejectedValue({ code: "resource_missing" }) } });
+    const { POST } = await import("@/app/api/billing/checkout/route");
+    const response = await POST(request());
+    expect(response.status).toBe(409);
+    expect(await response.json()).toMatchObject({ code: "billing_account_migration_required" });
+    expect(create).not.toHaveBeenCalled();
+  });
+
+  it("never releases a recovered Checkout URL from the wrong mode", async () => {
+    const rpc = vi.fn().mockResolvedValue({ data: {
+      allowed: true, status: "ready", intent_id: intentId, plan: "solo", provider_price_id: priceId,
+      provider_session_id: sessionId, session_expires_at: new Date(expiresAt * 1000).toISOString(),
+    }, error: null });
+    resolveBillingOrganization.mockResolvedValue({ ok: true, organizationId, supabase: { ...subscriptionQuery(), rpc } });
+    getStripeClient.mockReturnValue({ checkout: { sessions: { retrieve: vi.fn().mockResolvedValue({ ...openSession(), livemode: true }) } } });
+    const { POST } = await import("@/app/api/billing/checkout/route");
+    const response = await POST(request());
+    expect(response.status).toBe(503);
+    expect(await response.json()).not.toHaveProperty("url");
+  });
+
   it("rejects a second subscription when the database reports an existing one", async () => {
     const rpc = vi.fn().mockResolvedValue({
       data: { allowed: false, code: "existing_subscription" },
@@ -166,6 +198,10 @@ describe("Stripe Checkout intent boundary", () => {
     const serviceRpc = vi.fn().mockResolvedValue({ data: { ok: true, status: "ready" }, error: null });
     resolveBillingOrganization.mockResolvedValue({ ok: true, organizationId, supabase: userStorage });
     getStripeClient.mockReturnValue({ checkout: { sessions: { create } } });
+    getStripeClient.mockReturnValue({
+      checkout: { sessions: { create } },
+      customers: { retrieve: vi.fn().mockResolvedValue({ id: "cus_existing", livemode: false }) },
+    });
     getSupabaseServiceClient.mockReturnValue({ rpc: serviceRpc });
 
     const { POST } = await import("@/app/api/billing/checkout/route");

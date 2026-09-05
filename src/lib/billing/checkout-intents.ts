@@ -4,6 +4,7 @@ import type Stripe from "stripe";
 import { z } from "zod";
 import { paidPlanSchema, type PaidPlanKey } from "@/lib/billing/catalog";
 import { getSupabaseServiceClient } from "@/lib/supabase/service";
+import { stripeObjectMatchesMode } from "@/lib/billing/mode";
 
 const intentIdSchema = z.string().uuid();
 const leaseTokenSchema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -65,7 +66,8 @@ export function verifiedCheckoutSessionUrl(
   session: Stripe.Checkout.Session,
   expected: { organizationId: string; plan: PaidPlanKey; priceId: string },
 ) {
-  if (session.mode !== "subscription"
+  if (!stripeObjectMatchesMode(session)
+      || session.mode !== "subscription"
       || session.client_reference_id !== expected.organizationId
       || session.metadata?.organizationId !== expected.organizationId
       || session.metadata?.plan !== expected.plan

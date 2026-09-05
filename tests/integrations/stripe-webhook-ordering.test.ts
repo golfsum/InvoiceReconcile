@@ -1,5 +1,5 @@
 import type Stripe from "stripe";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}));
 
@@ -43,6 +43,7 @@ const normalizedSubscription = {
 
 const event = {
   id: "evt_subscription_deleted_test",
+  livemode: false,
   object: "event",
   created: 1_787_486_400,
   type: "customer.subscription.deleted",
@@ -64,6 +65,9 @@ function request() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  vi.stubEnv("STRIPE_BILLING_MODE", "test");
+  vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_fixture");
+  vi.stubEnv("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY", "pk_test_fixture");
   const constructEvent = vi.fn().mockReturnValue(event);
   getStripeClient.mockReturnValue({ webhooks: { constructEvent } });
   getStripeWebhookSecret.mockReturnValue("whsec_test");
@@ -71,7 +75,29 @@ beforeEach(() => {
   markCheckoutIntentCompleted.mockResolvedValue({ ok: true });
 });
 
+afterEach(() => vi.unstubAllEnvs());
+
 describe("Stripe webhook event ordering boundary", () => {
+  it("rejects a correctly signed event from the wrong mode without writing data", async () => {
+    getStripeClient.mockReturnValue({ webhooks: { constructEvent: vi.fn().mockReturnValue({ ...event, livemode: true }) } });
+    const { POST } = await import("@/app/api/webhooks/stripe/route");
+    expect((await POST(request())).status).toBe(400);
+    expect(persistStripeSubscription).not.toHaveBeenCalled();
+    expect(markCheckoutIntentCompleted).not.toHaveBeenCalled();
+  });
+
+  it.each(["past_due", "unpaid", "active"])("persists the %s renewal lifecycle update", async (status) => {
+    const update = { ...event, type: "customer.subscription.updated" };
+    getStripeClient.mockReturnValue({ webhooks: { constructEvent: vi.fn().mockReturnValue(update) } });
+    normalizeStripeSubscription.mockReturnValue({ ok: true, value: { ...normalizedSubscription, status } });
+    persistStripeSubscription.mockResolvedValue({ ok: true, outcome: "applied" });
+    const { POST } = await import("@/app/api/webhooks/stripe/route");
+    expect((await POST(request())).status).toBe(200);
+    expect(persistStripeSubscription).toHaveBeenCalledWith(
+      expect.objectContaining({ status }), expect.objectContaining({ eventType: "customer.subscription.updated" }),
+    );
+  });
+
   it("does not acknowledge a signed event when its atomic state write fails", async () => {
     persistStripeSubscription.mockResolvedValue({ ok: false, code: "subscription_persist_failed" });
     const { POST } = await import("@/app/api/webhooks/stripe/route");
@@ -100,6 +126,7 @@ describe("Stripe webhook event ordering boundary", () => {
   it("does not acknowledge Checkout completion until the intent receipt is durable", async () => {
     const checkoutEvent = {
       id: "evt_checkout_completed_test",
+      livemode: false,
       object: "event",
       created: 1_787_486_400,
       type: "checkout.session.completed",

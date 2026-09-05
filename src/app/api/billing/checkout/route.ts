@@ -12,6 +12,7 @@ import {
 } from "@/lib/billing/checkout-intents";
 import { resolveBillingOrganization, safeReturnPath } from "@/lib/billing/http";
 import { getStripeClient, verifiedStripePrice } from "@/lib/billing/stripe";
+import { incompatibleBillingAccount, isCompatibleStripeCustomer } from "@/lib/billing/customer";
 import { siteConfig } from "@/lib/config";
 import { logger, logServerError } from "@/lib/logger";
 import {
@@ -200,6 +201,9 @@ export async function POST(request: Request) {
         });
       }
       const customerId = existingSubscription?.provider_customer_id as string | null | undefined;
+      if (customerId && !await isCompatibleStripeCustomer(stripe, customerId)) {
+        return NextResponse.json(incompatibleBillingAccount, { status: 409 });
+      }
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         line_items: [{ price: price.priceId, quantity: 1 }],

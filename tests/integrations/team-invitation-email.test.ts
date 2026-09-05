@@ -4,6 +4,7 @@ vi.mock("server-only", () => ({}));
 
 const sendEmail = vi.hoisted(() => vi.fn());
 vi.mock("postmark", () => ({
+  Models: { LinkTrackingOptions: { None: "None" } },
   ServerClient: class {
     sendEmail = sendEmail;
   },

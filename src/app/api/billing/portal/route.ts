@@ -3,6 +3,7 @@ import { z } from "zod";
 import { getCurrentUser } from "@/lib/auth/access";
 import { resolveBillingOrganization, safeReturnPath } from "@/lib/billing/http";
 import { getStripeClient } from "@/lib/billing/stripe";
+import { incompatibleBillingAccount, isCompatibleStripeCustomer } from "@/lib/billing/customer";
 import { siteConfig } from "@/lib/config";
 import { logServerError } from "@/lib/logger";
 import {
@@ -59,6 +60,9 @@ export async function POST(request: Request) {
   if (!stripe) return NextResponse.json({ error: "Billing is not configured" }, { status: 503 });
 
   try {
+    if (!await isCompatibleStripeCustomer(stripe, customerId)) {
+      return NextResponse.json(incompatibleBillingAccount, { status: 409 });
+    }
     const returnPath = safeReturnPath(parsed.data.returnTo, "/app");
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,

@@ -19,7 +19,9 @@ const payload = JSON.stringify({
 describe("Stripe webhook signature boundary", () => {
   beforeEach(() => {
     vi.resetModules();
-    vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_invoice_reconcile");
+    vi.stubEnv("STRIPE_BILLING_MODE", "test");
+    vi.stubEnv("STRIPE_SECRET_KEY", "sk_test_fixture");
+    vi.stubEnv("NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY", "pk_test_fixture");
     vi.stubEnv("STRIPE_WEBHOOK_SECRET", webhookSecret);
   });
 

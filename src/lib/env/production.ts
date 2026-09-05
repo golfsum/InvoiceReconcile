@@ -17,7 +17,7 @@ const supportEmail = email.refine(
   "must be support@invoicereconcile.com",
 );
 const httpsUrl = z.string().trim().url("must be a valid URL").refine(
-  (value) => new URL(value).protocol === "https:",
+  (value) => URL.canParse(value) && new URL(value).protocol === "https:",
   "must use HTTPS",
 );
 const optionalTrimmed = z.preprocess(
@@ -27,6 +27,7 @@ const optionalTrimmed = z.preprocess(
 
 export const productionEnvironmentSchema = z.object({
   NEXT_PUBLIC_APP_URL: httpsUrl.refine((value) => {
+    if (!URL.canParse(value)) return false;
     const hostname = new URL(value).hostname.toLowerCase();
     return hostname !== "localhost" && hostname !== "127.0.0.1" && !hostname.endsWith(".local");
   }, "must use a public production hostname"),
@@ -44,6 +45,7 @@ export const productionEnvironmentSchema = z.object({
   UPSTASH_REDIS_REST_URL: httpsUrl,
   UPSTASH_REDIS_REST_TOKEN: requiredText(10),
 
+  STRIPE_BILLING_MODE: z.literal("live", { error: "must be explicitly set to live for a paid launch" }),
   STRIPE_SECRET_KEY: z.string().trim().regex(/^sk_live_[A-Za-z0-9]+$/, "must be a live Stripe secret key"),
   NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: z.string().trim().regex(/^pk_live_[A-Za-z0-9]+$/, "must be a live Stripe publishable key"),
   STRIPE_WEBHOOK_SECRET: z.string().trim().regex(/^whsec_[A-Za-z0-9]+$/, "must be a Stripe webhook signing secret"),
@@ -52,7 +54,11 @@ export const productionEnvironmentSchema = z.object({
   STRIPE_PRICE_BOOKKEEPER: z.string().trim().regex(/^price_[A-Za-z0-9]+$/, "must be a Stripe Price ID"),
 
   POSTMARK_SERVER_TOKEN: nonPlaceholderText(10),
-  POSTMARK_FROM_EMAIL: supportEmail,
+  POSTMARK_FROM_EMAIL: email.refine(
+    (value) => ["notifications@invoicereconcile.com", "support@invoicereconcile.com"].includes(value.toLowerCase()),
+    "must use the verified InvoiceReconcile notifications or support sender",
+  ),
+  CONTACT_NOTIFICATION_EMAIL: email.optional(),
   POSTMARK_MESSAGE_STREAM: nonPlaceholderText(),
 
   ENABLE_DEMO_MODE: explicitBoolean,

@@ -28,6 +28,7 @@ describe("billing catalog", () => {
 
   it("reports billing ready only when the complete hosted-checkout configuration exists", () => {
     const complete = {
+      STRIPE_BILLING_MODE: "live",
       STRIPE_SECRET_KEY: "sk_live_example",
       STRIPE_WEBHOOK_SECRET: "whsec_example",
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_live_example",
@@ -55,6 +56,10 @@ describe("billing catalog", () => {
     expect(validateStripePrice("solo", { ...base, recurring: { interval: "year" } })).toEqual({
       valid: false,
       reason: "interval_mismatch",
+    });
+    expect(validateStripePrice("solo", { ...base, recurring: { interval: "month", intervalCount: 3 } })).toEqual({
+      valid: false,
+      reason: "interval_count_mismatch",
     });
   });
 });

@@ -88,7 +88,7 @@ export function normalizeStripeSubscription(
     active: price.active,
     currency: price.currency,
     id: price.id,
-    recurring: price.recurring ? { interval: price.recurring.interval } : null,
+    recurring: price.recurring ? { interval: price.recurring.interval, intervalCount: price.recurring.interval_count } : null,
     unitAmount: price.unit_amount,
   }, { requireActive: false });
   if (!validation.valid) return { ok: false, code: validation.reason };
@@ -126,7 +126,11 @@ export function normalizeStripeSubscription(
       trialEndsAt: timestampToIso(subscription.trial_end),
       currentPeriodStartsAt: timestampToIso(item.current_period_start),
       currentPeriodEndsAt: timestampToIso(item.current_period_end),
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      cancelAtPeriodEnd: subscription.cancel_at_period_end || (
+        subscription.status !== "canceled"
+        && typeof subscription.cancel_at === "number"
+        && subscription.cancel_at === item.current_period_end
+      ),
       canceledAt: timestampToIso(subscription.canceled_at),
     },
   };
