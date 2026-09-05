@@ -21,8 +21,14 @@ describe("InvoiceReconcile email roles", () => {
   });
   it("routes general enquiries and acknowledgement replies to contact", async () => {
     const { sendContactEmails } = await import("@/lib/email/contact");
-    await sendContactEmails({ email: "sender@example.com", name: "Casey", message: "Question", requestId: "test-request" });
+    await sendContactEmails({ email: "sender@example.com", name: "Casey", subject: "general", message: "Question", requestId: "test-request" });
     expect(sendEmail).toHaveBeenNthCalledWith(1, expect.objectContaining({ To: "contact@invoicereconcile.com", ReplyTo: "sender@example.com" }));
     expect(sendEmail).toHaveBeenNthCalledWith(2, expect.objectContaining({ To: "sender@example.com", ReplyTo: "contact@invoicereconcile.com" }));
+  });
+  it.each(["product", "account", "billing", "privacy", "security", "legal", "unknown", undefined])("keeps %s requests and replies in support", async (subject) => {
+    const { sendContactEmails } = await import("@/lib/email/contact");
+    await sendContactEmails({ email: "sender@example.com", name: "Casey", subject, message: "Question", requestId: "test-request" });
+    expect(sendEmail).toHaveBeenNthCalledWith(1, expect.objectContaining({ To: "support@invoicereconcile.com" }));
+    expect(sendEmail).toHaveBeenNthCalledWith(2, expect.objectContaining({ ReplyTo: "support@invoicereconcile.com" }));
   });
 });

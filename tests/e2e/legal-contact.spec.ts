@@ -32,7 +32,7 @@ test("the contact form sends a correctly shaped support request without external
   await page.getByLabel("Work email").fill("casey@example.com");
   await page.getByLabel("Topic").selectOption("privacy");
   await page.getByLabel("Message").fill("Please explain how I can request a copy of my account data.");
-  await page.getByRole("button", { name: "Send to support" }).click();
+  await page.getByRole("button", { name: "Send message" }).click();
 
   await expect(page.getByRole("status")).toContainText("Your request was sent.");
   expect(submittedPayload).toMatchObject({

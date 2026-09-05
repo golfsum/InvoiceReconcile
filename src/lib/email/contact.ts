@@ -14,7 +14,10 @@ export type ContactMessage = {
 
 export async function sendContactEmails(input: ContactMessage) {
   const configuredContact = z.string().trim().email().safeParse(process.env.CONTACT_NOTIFICATION_EMAIL);
-  const contactEmail = configuredContact.success ? configuredContact.data : siteConfig.supportEmail;
+  // Only an explicit general enquiry leaves the support inbox. Preserve the
+  // support destination for existing forms and unknown or omitted subjects.
+  const contactEmail = input.subject === "general" && configuredContact.success
+    ? configuredContact.data : siteConfig.supportEmail;
   const safeName = escapeHtml(input.name);
   const safeEmail = escapeHtml(input.email);
   const safeSubject = escapeHtml(input.subject || "General question");

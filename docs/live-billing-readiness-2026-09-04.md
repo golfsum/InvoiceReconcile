@@ -30,7 +30,7 @@ The inspection reads account readiness, prices, endpoint events/API version, exp
 
 ## Verified in this pass
 
-- 386 automated tests passed across 85 files, including email routing, wrong-mode events and Checkout URLs, incompatible customers, renewal status handling and scheduled cancellation.
+- 394 automated tests passed across 85 files, including separate general/support topic routing, wrong-mode events and Checkout URLs, incompatible customers, renewal status handling and scheduled cancellation.
 - Production build, typecheck, lint and copy checks passed.
 - Read-only calls using the available sandbox key verified all three monthly prices, the configured webhook events and pinned API version, and the default portal's plan changes, payment-method updates, invoice history and period-end cancellation.
 - DNS MX records remain on Migadu. The user confirmed receipt of the application email setup test sent through Postmark to `contact@invoicereconcile.com`.
@@ -54,7 +54,7 @@ The stream's server may also serve AppsResolve. Do not rename it, rotate shared 
 
 Supabase Auth custom SMTP was enabled and saved for project `ajhfuduvxuemjloepfra`: `smtp.postmarkapp.com`, port `587`, using a newly generated stream-specific SMTP Access Key and Secret Key for `invoicereconcile`. Email confirmation remains enabled. Actual signup/reset delivery still needs verification; a successful settings save is not proof of that flow. See [Postmark SMTP configuration](https://postmarkapp.com/developer/user-guide/send-email-with-smtp) and [Supabase custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
 
-Automated messages use `notifications@` with a default Reply-To of `support@`. General contact-form enquiries and their acknowledgement replies use `contact@`. A Postmark sender signature also sets the notification sender's default Reply-To to `support@`. No notification inbox was created. Migadu MX, SPF, DKIM and DMARC were preserved. Support inbox/forwarding access remains a separate check.
+Automated messages use `notifications@` with a default Reply-To of `support@`. Only the explicit General enquiry contact-form topic and its acknowledgement replies use `contact@`. Product, account, billing, privacy, security, legal, omitted and unknown topics stay with `support@`. A Postmark sender signature also sets the notification sender's default Reply-To to `support@`. No notification inbox was created. Migadu MX, SPF, DKIM and DMARC were preserved. Support inbox/forwarding access remains a separate check.
 
 The local application email sender passed a real Postmark delivery test, confirmed by the user. Application link/open tracking is disabled. The production contact-form path still needs a post-deployment smoke test. AppsResolve settings and shared Postmark tokens were not rotated.
 
