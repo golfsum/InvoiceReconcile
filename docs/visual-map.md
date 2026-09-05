@@ -25,3 +25,11 @@
 - Admin denied state and local demo label
 
 For every scrollable capture, measure the rendered scroll height and viewport, capture from zero through the exact maximum scroll position, and keep overlap between adjacent frames.
+
+## September 4 growth verification
+
+`scripts/verify-marketing-visuals.mjs` measures and captures complete overlapping vertical sweeps of home, pricing, and the Excel guide. Viewports: 1440x1000 desktop, 375x667 small phone, 390x844 phone, 430x932 large phone, and 412x915 Android-sized viewport. It asserts no page-level horizontal overflow and the true final scroll position. These are browser emulations, not native device certification.
+
+Initial run: 15 page/device combinations, 152 frames in a unique temporary output directory with coverage.json. First, intermediate and bottom images were reviewed. The initial sweep exposed the floating privacy control covering a small-phone CTA. It was moved into document flow and the sweep repeated. The pricing test covers default, paid, workspace-constrained, advanced-feature, empty and unsupported-volume states plus signup navigation. Existing narrated-demo interaction tests remain passing.
+
+Final hydrated sweep: 153 frames, including the inline privacy-control footer at the true bottom. It waits for hydration before measurement and asserts the height has not changed by the last frame. Dark-theme checks separately verify explicit theme selection against a light OS setting, primary-action contrast, and automated pricing accessibility.

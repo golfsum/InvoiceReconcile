@@ -17,7 +17,7 @@ export const industryPages: Record<string, AudiencePage> = {
   bookkeepers: {
     slug: "bookkeepers",
     title: "A multi-client reconciliation routine for bookkeepers",
-    metaTitle: "Invoice Reconciliation for Bookkeepers | InvoiceReconcile",
+    metaTitle: "Monthly Payment Reconciliation for Bookkeeping Practices",
     description: "Move through client payment exceptions with isolated imports, visible source evidence, and a clear audit trail.",
     eyebrow: "Bookkeeping practices",
     intro: "Bookkeepers need speed without mixing one client's habits into another. A firm queue shows which workspaces need attention, then each client opens into its own import history, rules, exceptions, and exports.",

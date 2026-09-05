@@ -4,7 +4,7 @@ export const solutionPages: Record<string, AudiencePage> = {
   bookkeepers: {
     slug: "bookkeepers",
     title: "A payment reconciliation workspace built for bookkeepers",
-    metaTitle: "Invoice Reconciliation for Bookkeepers | InvoiceReconcile",
+    metaTitle: "Multi-Client Reconciliation Workspace for Bookkeepers",
     description: "Review incoming payment exceptions across client-scoped workspaces with isolated imports, decisions, and audit history.",
     eyebrow: "Solution for bookkeepers",
     intro: "Move from client folder to client folder without rebuilding the reconciliation method. Each workspace keeps its invoice and payment records, decisions, and exports separate while the portfolio view shows where work remains.",
@@ -32,7 +32,7 @@ export const solutionPages: Record<string, AudiencePage> = {
   "accounting-firms": {
     slug: "accounting-firms",
     title: "Standardize incoming payment reconciliation across client teams",
-    metaTitle: "Payment Reconciliation for Accounting Firms | InvoiceReconcile",
+    metaTitle: "Client Payment Review Workflow for Accounting Teams",
     description: "Give accounting teams one review standard for incoming payment matches while keeping client data, rules, and access isolated.",
     eyebrow: "Solution for accounting firms",
     intro: "A consistent evidence panel and decision workflow can improve review quality across engagements. Client source files and learned mappings stay separated, while engagement leads can see operational progress and recurring exception types.",
@@ -60,7 +60,7 @@ export const solutionPages: Record<string, AudiencePage> = {
   "small-business": {
     slug: "small-business",
     title: "Reconcile customer payments without a long implementation",
-    metaTitle: "Payment Reconciliation for Small Business | InvoiceReconcile",
+    metaTitle: "Match Small Business Payments from CSV and Excel",
     description: "Import current invoice and payment files, clear obvious matches, and review only the deposits that need a decision.",
     eyebrow: "Solution for small business",
     intro: "Use the files your team already exports. InvoiceReconcile compares incoming payments with open invoices, explains suggested matches, and keeps partials, fees, grouped deposits, and missing references visible for review.",

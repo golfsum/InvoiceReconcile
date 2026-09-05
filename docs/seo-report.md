@@ -104,4 +104,18 @@ npx eslint "src/content/seo/**/*.{ts,tsx}" "src/app/(marketing)/resources/**/*.{
 npm run typecheck
 ```
 
-The root sitemap, robots file, sitewide not-found page, and global analytics listener are integration responsibilities outside this route track. The public route inventories exported from the content modules are ready for the sitemap implementation.
+The original route-track scope has since been integrated with the root sitemap and robots policy.
+
+## September 4, 2026 growth audit
+
+The local production-build crawl now covers all 51 sitemap URLs: HTTP 200, unique title and description, one canonical matching its sitemap URL, one H1, and no noindex directive. Four duplicate titles across solution/industry pages were found and corrected. Topic pages and audience pages retain distinct content; no new keyword variants were generated. The homepage has search-specific metadata and aligned Open Graph/Twitter text. Private routes remain outside the sitemap.
+
+Homepage and pricing make the 50-payment monthly free offer explicit. Pricing now explains gated features, supports a volume/workspace/feature chooser, and preserves explicit checkout. Topic pages lead to the free workspace after their useful worked content. The CSV sample link now leads to a guide with actual downloadable files. Fictional examples are labeled and misleading popularity/match-rate claims removed.
+
+`tests/e2e/growth-funnel.spec.ts` verifies the crawl and conversion links; `tests/seo/plan-recommendation.test.ts` verifies pricing boundaries. Local production browser tests verify signup plan preservation, sample exceptions, CSV downloads, demo narration and interactions, and pricing accessibility. The full test suite has 362 passing tests.
+
+Production-build Lighthouse lab reports: mobile performance 95, desktop 100; SEO, accessibility and best practices 100 on both. These are synthetic local results, not field Core Web Vitals or ranking forecasts. The initial Windows CLI wrote complete reports but errored when deleting its temporary browser profile. Follow-up audits completed successfully against an already-running browser. Mobile LCP was 2.8 seconds and desktop 0.7 seconds. The audit also surfaced an accessible-name issue and unnecessary initial audio loading, both corrected.
+
+No claim is made that Search Console is connected, pages are indexed, or production reflects this working tree. Deployment and real email/live billing verification remain gates. SoftwareApplication markup without reviews is not claimed to qualify for Google's software rich result; no fake rating or review was added.
+
+See [the dated growth plan](growth-plan-2026-09-04.md) for current official sources, the buyer hypothesis, pilot recruitment, priority intent pages, and consent-aware activation metrics. Earlier statements in this document about unique metadata describe the intended baseline; this audit provides the actual regression evidence.

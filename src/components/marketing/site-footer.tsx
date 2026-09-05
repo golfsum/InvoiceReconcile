@@ -27,7 +27,7 @@ const groups = [
       ["Lump-sum matcher", "/tools/lump-sum-invoice-matcher"],
       ["Payment matcher", "/tools/invoice-payment-matcher"],
       ["Time calculator", "/tools/reconciliation-time-calculator"],
-      ["Sample CSV files", "/app/demo"],
+      ["Sample CSV files", "/excel-invoice-reconciliation"],
     ],
   },
   {

@@ -6,10 +6,11 @@ import { solutionSlugs } from "@/content/seo/solutions";
 import { siteConfig } from "@/lib/config";
 
 const updated = new Date("2026-08-23T00:00:00.000Z");
+const growthUpdated = new Date("2026-09-04T00:00:00.000Z");
 const tools = ["lump-sum-invoice-matcher", "invoice-payment-matcher", "reconciliation-time-calculator", "partial-payment-allocation", "invoice-reference-cleaner"];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const entry = (path: string, changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"], priority: number) => ({ url: new URL(path, siteConfig.url).toString(), lastModified: updated, changeFrequency, priority });
+  const entry = (path: string, changeFrequency: MetadataRoute.Sitemap[number]["changeFrequency"], priority: number) => ({ url: new URL(path, siteConfig.url).toString(), lastModified: path === "/" || path === "/pricing" || path === "/industries/bookkeepers" || path.startsWith("/solutions/") || landingPageSlugs.some((slug) => path === `/${slug}`) ? growthUpdated : updated, changeFrequency, priority });
   return [
     entry("/", "weekly", 1),
     entry("/product", "monthly", 0.9),

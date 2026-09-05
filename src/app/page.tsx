@@ -18,11 +18,16 @@ import { MarketingFrame } from "@/components/marketing/marketing-frame";
 import { NarratedDemo } from "@/components/marketing/narrated-demo";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { buttonVariants } from "@/components/ui/button";
-import { JsonLd } from "@/content/seo/seo-components";
+import { canonicalMetadata, JsonLd } from "@/content/seo/seo-components";
+import { northstarInvoices, northstarPayments } from "@/lib/reconciliation/fixtures/northstar";
 import { plans, siteConfig } from "@/lib/config";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { alternates: { canonical: "/" } };
+export const metadata: Metadata = canonicalMetadata(
+  "Invoice Reconciliation Software for Bookkeepers",
+  "Match CSV and Excel payments to invoices, including lump sums, partials and fees. Review the evidence and export results. Start free with 50 payments per month.",
+  "/",
+);
 
 const hardCases = [
   { icon: Split, title: "One payment, several invoices", copy: "Narrow by payer, date, currency, and reference before testing plausible invoice combinations." },
@@ -32,9 +37,9 @@ const hardCases = [
 ];
 
 const audiences = [
-  { icon: BookOpenCheck, title: "Bookkeepers", copy: "Move across client workspaces from one portfolio view while keeping imported records and decisions separate." },
-  { icon: Building2, title: "Accounting firms", copy: "See what is ready, what is waiting, and who made each reconciliation decision across the firm." },
-  { icon: Users, title: "Small finance teams", copy: "Replace repeated spreadsheet lookups with a traceable import, review, confirm, and export workflow." },
+  { icon: BookOpenCheck, title: "Bookkeepers", href: "/solutions/bookkeepers", copy: "Move across client workspaces from one portfolio view while keeping imported records and decisions separate." },
+  { icon: Building2, title: "Accounting firms", href: "/solutions/accounting-firms", copy: "See what is ready, what is waiting, and who made each reconciliation decision across the firm." },
+  { icon: Users, title: "Small finance teams", href: "/solutions/small-business", copy: "Replace repeated spreadsheet lookups with a traceable import, review, confirm, and export workflow." },
 ];
 
 function HeroLedger() {
@@ -45,10 +50,10 @@ function HeroLedger() {
           <p className="text-xs font-semibold text-muted">Northstar Services · Fictional sample</p>
           <p className="mt-0.5 text-sm font-semibold">Today&apos;s reconciliation</p>
         </div>
-        <span className="border border-success/20 bg-success-soft px-2 py-1 text-xs font-bold text-success">92% matched</span>
+        <span className="border border-success/20 bg-success-soft px-2 py-1 text-xs font-bold text-success">Try it yourself</span>
       </div>
       <div className="grid grid-cols-2 border-b sm:grid-cols-4">
-        {[["Imported", "187"], ["Exact", "154"], ["High", "18"], ["Review", "15"]].map(([label, value], index) => (
+        {[["Invoices", String(northstarInvoices.length)], ["Payment rows", String(northstarPayments.length)], ["Currency", "USD"], ["Data", "Sample"]].map(([label, value], index) => (
           <div key={label} className={cn("p-4", index < 3 ? "sm:border-r" : "", index < 2 ? "border-b sm:border-b-0" : "")}>
             <p className="text-xs text-muted">{label}</p>
             <p className="numeric mt-1 text-2xl font-semibold tracking-tight">{value}</p>
@@ -57,17 +62,18 @@ function HeroLedger() {
       </div>
       <div className="p-5">
         <div className="flex items-center justify-between gap-3">
-          <div><p className="text-xs font-bold uppercase tracking-[0.09em] text-muted">Next exception</p><p className="mt-2 text-sm font-semibold">Bluebird Studio</p></div>
+          <div><p className="text-xs font-bold uppercase tracking-[0.09em] text-muted">A case in the demo</p><p className="mt-2 text-sm font-semibold">Suncrest Architecture</p></div>
           <p className="numeric text-lg font-semibold">$4,850.00</p>
         </div>
         <div className="mt-4 flex items-center justify-between gap-3 border-y py-3 text-sm">
-          <span className="font-mono text-xs">INV-10516</span><span className="numeric font-semibold">$5,000.00</span>
+          <span className="font-mono text-xs">NS-2026-1009</span><span className="numeric font-semibold">$5,000.00</span>
         </div>
         <div className="mt-4 flex items-start gap-3 bg-warning-soft p-3 text-warning">
           <ScanSearch className="mt-0.5 size-4 shrink-0" />
           <div><p className="text-sm font-semibold">Review $150.00 difference</p><p className="mt-1 text-xs leading-5 text-muted-strong">Possible fee or deduction. No reason has been assumed.</p></div>
         </div>
-        <Link href="/app/demo" className={cn(buttonVariants({ variant: "primary" }), "mt-5 w-full")}>Review 15 exceptions</Link>
+        <Link href="/app/demo/exceptions" className={cn(buttonVariants({ variant: "primary" }), "mt-5 w-full")}>Explore the sample exceptions</Link>
+        <p className="mt-3 text-center text-xs leading-5 text-muted">Fictional data. No signup or bank connection needed.</p>
       </div>
     </div>
   );
@@ -92,20 +98,27 @@ export default function Home() {
         <div className="hairline-grid pointer-events-none absolute inset-0 opacity-70" aria-hidden="true" />
         <div className="page-shell relative grid gap-12 lg:grid-cols-[1.04fr_0.96fr] lg:items-center">
           <div>
-            <p className="eyebrow">Incoming payment reconciliation</p>
+            <p className="eyebrow">Invoice reconciliation software for bookkeepers</p>
             <h1 className="mt-5 max-w-3xl text-balance text-[2.7rem] font-semibold leading-[1.03] tracking-[-0.055em] sm:text-6xl lg:text-[4.2rem]">Stop matching invoice payments by hand.</h1>
-            <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-strong sm:text-xl">Import open invoices and incoming payments. InvoiceReconcile finds exact matches, combined payments, partial payments and discrepancies so you only review the exceptions.</p>
+            <p className="mt-6 max-w-2xl text-lg leading-8 text-muted-strong sm:text-xl">Turn invoice and bank exports into suggested matches, a clear exception list, and a reviewable record. Handle combined payments, partials, and fees without replacing your accounting software.</p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link href="/auth/sign-up" className={buttonVariants({ variant: "primary", size: "lg" })}>Reconcile my first file <ArrowRight className="size-4" /></Link>
-              <Link href="/app/demo" className={buttonVariants({ variant: "secondary", size: "lg" })}>Try the sample data</Link>
+              <Link href="/auth/sign-up" className={buttonVariants({ variant: "primary", size: "lg" })}>Reconcile 50 payments free <ArrowRight className="size-4" /></Link>
+              <Link href="/app/demo" className={buttonVariants({ variant: "secondary", size: "lg" })}>Try it without signing up</Link>
             </div>
             <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted">
               <span className="inline-flex items-center gap-2"><Check className="size-4 text-success" /> No credit card required</span>
-              <span className="inline-flex items-center gap-2"><Check className="size-4 text-success" /> CSV and XLSX ready</span>
+              <span className="inline-flex items-center gap-2"><Check className="size-4 text-success" /> 50 payments every month</span>
               <span className="inline-flex items-center gap-2"><Check className="size-4 text-success" /> You confirm every result</span>
             </div>
           </div>
           <HeroLedger />
+        </div>
+      </section>
+
+      <section className="border-b bg-surface py-8" aria-label="Works with your existing exports">
+        <div className="page-shell grid gap-5 lg:grid-cols-[1fr_auto] lg:items-center">
+          <div><h2 className="font-semibold">Keep your accounting system. Lose the repeated lookups.</h2><p className="mt-2 max-w-3xl text-sm leading-6 text-muted">Upload CSV or XLSX invoice and payment exports from your existing tools. No live QuickBooks, Xero, or bank connection is required. Nothing posts back automatically.</p></div>
+          <Link href="/excel-invoice-reconciliation" className="inline-flex items-center gap-2 text-sm font-semibold text-brand hover:underline">See the file format and free samples <ArrowRight className="size-4" /></Link>
         </div>
       </section>
 
@@ -154,15 +167,15 @@ export default function Home() {
 
       <section className="border-y bg-[#eff2ed] py-18 text-[#17201d] dark:bg-[#18201d] dark:text-[#edf1ee] sm:py-24">
         <div className="page-shell grid gap-10 lg:grid-cols-[0.72fr_1.28fr] lg:items-center">
-          <div><p className="eyebrow">Exception inbox</p><h2 className="mt-4 text-balance text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">Start with the decisions that need you.</h2><p className="mt-4 text-base leading-7 text-muted-strong">Successful matches stay available in the audit trail. The working queue prioritizes discrepancies, ambiguity, and unmatched payments.</p><Link href="/app/demo" className={cn(buttonVariants({ variant: "primary" }), "mt-7")}>Open the demo inbox <ArrowRight className="size-4" /></Link></div>
+          <div><p className="eyebrow">Exception inbox</p><h2 className="mt-4 text-balance text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">Start with the decisions that need you.</h2><p className="mt-4 text-base leading-7 text-muted-strong">Successful matches stay available in the audit trail. The working queue prioritizes discrepancies, ambiguity, and unmatched payments.</p><Link href="/app/demo/exceptions" className={cn(buttonVariants({ variant: "primary" }), "mt-7")}>Open the demo inbox <ArrowRight className="size-4" /></Link></div>
           <div className="overflow-x-auto border bg-surface shadow-panel" tabIndex={0} aria-label="Scrollable example reconciliation exceptions table">
             <table className="w-full min-w-[650px] text-left text-sm">
               <caption className="sr-only">Example reconciliation exceptions</caption>
               <thead className="border-b bg-surface-muted text-xs uppercase tracking-[0.08em] text-muted"><tr><th className="px-4 py-3">Payment</th><th className="px-4 py-3">Suggested</th><th className="px-4 py-3">Difference</th><th className="px-4 py-3">Status</th></tr></thead>
               <tbody className="divide-y">
-                <tr><td className="px-4 py-4"><strong>Bluebird Studio</strong><span className="mt-1 block text-xs text-muted">$4,850.00 · Apr 12</span></td><td className="px-4 py-4 font-mono text-xs">INV-10516</td><td className="numeric px-4 py-4 text-warning">-$150.00</td><td className="px-4 py-4"><StatusBadge status="review" /></td></tr>
-                <tr><td className="px-4 py-4"><strong>Marin Holdings</strong><span className="mt-1 block text-xs text-muted">$2,500.00 · Apr 11</span></td><td className="px-4 py-4 font-mono text-xs">INV-10492</td><td className="numeric px-4 py-4">Partial</td><td className="px-4 py-4"><StatusBadge status="review" label="Partial" /></td></tr>
-                <tr><td className="px-4 py-4"><strong>ORIG CO: AHC</strong><span className="mt-1 block text-xs text-muted">$1,840.00 · Apr 10</span></td><td className="px-4 py-4 text-muted">No responsible match</td><td className="numeric px-4 py-4">$1,840.00</td><td className="px-4 py-4"><StatusBadge status="unmatched" /></td></tr>
+                <tr><td className="px-4 py-4"><strong>Suncrest Architecture</strong><span className="mt-1 block text-xs text-muted">$4,850.00 · Jul 1</span></td><td className="px-4 py-4 font-mono text-xs">NS-2026-1009</td><td className="numeric px-4 py-4 text-warning">-$150.00</td><td className="px-4 py-4"><StatusBadge status="review" /></td></tr>
+                <tr><td className="px-4 py-4"><strong>Copper State Legal</strong><span className="mt-1 block text-xs text-muted">$2,500.00 · Jun 29</span></td><td className="px-4 py-4 font-mono text-xs">NS-2026-1007</td><td className="numeric px-4 py-4">Partial</td><td className="px-4 py-4"><StatusBadge status="review" label="Partial" /></td></tr>
+                <tr><td className="px-4 py-4"><strong>Redwood Community Arts</strong><span className="mt-1 block text-xs text-muted">$535.00 · Jul 7</span></td><td className="px-4 py-4 text-muted">No responsible match</td><td className="numeric px-4 py-4">$535.00</td><td className="px-4 py-4"><StatusBadge status="unmatched" /></td></tr>
               </tbody>
             </table>
           </div>
@@ -171,7 +184,7 @@ export default function Home() {
 
       <section className="py-18 sm:py-24">
         <div className="page-shell"><p className="eyebrow">Who it is for</p><div className="mt-8 grid gap-8 lg:grid-cols-3">
-          {audiences.map((item) => <article key={item.title} className="border-t-2 border-foreground pt-6"><item.icon className="size-5 text-brand" /><h2 className="mt-7 text-xl font-semibold">{item.title}</h2><p className="mt-3 text-sm leading-6 text-muted">{item.copy}</p></article>)}
+          {audiences.map((item) => <article key={item.title} className="border-t-2 border-foreground pt-6"><item.icon className="size-5 text-brand" /><h2 className="mt-7 text-xl font-semibold">{item.title}</h2><p className="mt-3 text-sm leading-6 text-muted">{item.copy}</p><Link href={item.href} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-brand hover:underline">Explore the workflow <ArrowRight className="size-4" /></Link></article>)}
         </div></div>
       </section>
 
@@ -180,7 +193,7 @@ export default function Home() {
           <div><p className="eyebrow">Control and security</p><h2 className="mt-4 text-balance text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">A suggestion is not a posting.</h2><p className="mt-4 max-w-xl text-base leading-7 text-muted-strong">InvoiceReconcile keeps automated reasoning visible and leaves financial changes under human control. Confirmed results are exported only when you choose.</p><Link href="/security" className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-brand hover:underline">Read the security approach <ArrowRight className="size-4" /></Link></div>
           <ul className="divide-y border-y">
             <li className="flex gap-4 py-5"><LockKeyhole className="mt-0.5 size-5 shrink-0 text-brand" /><div><h3 className="font-semibold">Tenant isolation</h3><p className="mt-1 text-sm leading-6 text-muted">Workspace access is checked on the server and enforced with database row-level security.</p></div></li>
-            <li className="flex gap-4 py-5"><ShieldCheck className="mt-0.5 size-5 shrink-0 text-brand" /><div><h3 className="font-semibold">Controlled file processing</h3><p className="mt-1 text-sm leading-6 text-muted">Uploads are validated without public file URLs. Background sources are held temporarily in private storage, then enter capability-safe, verified cleanup while structured reconciliation records remain available.</p></div></li>
+            <li className="flex gap-4 py-5"><ShieldCheck className="mt-0.5 size-5 shrink-0 text-brand" /><div><h3 className="font-semibold">Controlled file processing</h3><p className="mt-1 text-sm leading-6 text-muted">Your uploaded files are private. Original upload files are held temporarily for processing, then cleaned up; structured records and review history remain available.</p></div></li>
             <li className="flex gap-4 py-5"><KeyRound className="mt-0.5 size-5 shrink-0 text-brand" /><div><h3 className="font-semibold">Traceable decisions</h3><p className="mt-1 text-sm leading-6 text-muted">Every match keeps its method, evidence, source import, prior state, new state, timestamp, and user.</p></div></li>
           </ul>
         </div>
@@ -192,7 +205,7 @@ export default function Home() {
           <div className="mt-10 grid gap-px border bg-border md:grid-cols-2 lg:grid-cols-4">
             {plans.map((plan) => (
               <article key={plan.key} className={cn("relative bg-surface p-6", "highlighted" in plan && plan.highlighted ? "ring-2 ring-inset ring-brand" : "")}>
-                {"highlighted" in plan && plan.highlighted ? <span className="absolute right-4 top-4 bg-brand-soft px-2 py-1 text-xs font-bold text-brand">Most popular</span> : null}
+                {"highlighted" in plan && plan.highlighted ? <span className="absolute right-4 top-4 bg-brand-soft px-2 py-1 text-xs font-bold text-brand">For teams</span> : null}
                 <h3 className="font-semibold">{plan.name}</h3><p className="numeric mt-5 text-3xl font-semibold tracking-tight">${plan.price}<span className="text-sm font-normal text-muted">/month</span></p><p className="mt-3 min-h-12 text-sm leading-6 text-muted">{plan.description}</p><p className="mt-5 border-t pt-4 text-xs font-semibold text-muted-strong">Up to {plan.paymentLimit.toLocaleString()} payments per month</p><Link href={`/auth/sign-up?plan=${plan.key}`} className={cn(buttonVariants({ variant: plan.key === "free" ? "secondary" : "primary" }), "mt-5 w-full")}>{plan.key === "free" ? "Start free" : `Choose ${plan.name}`}</Link>
               </article>
             ))}
@@ -217,7 +230,7 @@ export default function Home() {
 
       <section className="bg-[#173d2e] py-16 text-white sm:py-20">
         <div className="page-shell grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
-          <div><p className="text-xs font-bold uppercase tracking-[0.12em] text-[#9cdfbd]">Start with your files</p><h2 className="mt-4 max-w-3xl text-balance text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">Bring the spreadsheet you reconcile every month.</h2><p className="mt-4 max-w-2xl text-base leading-7 text-[#c8dbd2]">Have a messy file? Sign in and ask us to help map the first import. Published plans renew monthly until canceled.</p></div>
+          <div><p className="text-xs font-bold uppercase tracking-[0.12em] text-[#9cdfbd]">Start with your files</p><h2 className="mt-4 max-w-3xl text-balance text-3xl font-semibold tracking-[-0.04em] sm:text-4xl">Bring the spreadsheet you reconcile every month.</h2><p className="mt-4 max-w-2xl text-base leading-7 text-[#c8dbd2]">Start with 50 payments per month free, including matching, review, and exports. Upgrade when you need more payments, client workspaces, or custom rules.</p></div>
           <div className="flex flex-col gap-3 sm:flex-row lg:flex-col"><Link href="/auth/sign-up" className="inline-flex min-h-12 items-center justify-center gap-2 border border-white bg-white px-5 font-semibold text-[#173d2e] hover:bg-[#eff7f3]">Start free <ArrowRight className="size-4" /></Link><Link href="/contact" className="inline-flex min-h-12 items-center justify-center border border-white/35 px-5 font-semibold hover:border-white">Ask about a file</Link></div>
         </div>
       </section>

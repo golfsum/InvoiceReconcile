@@ -218,8 +218,7 @@ export function ConsentAnalytics({
       ) : (
         <button
           type="button"
-          className="fixed bottom-3 left-3 z-[70] border border-border-strong bg-surface px-3 py-2 text-xs font-semibold text-muted-strong shadow-sm hover:text-foreground"
-          style={{ position: "fixed", zIndex: 2_147_482_999 }}
+          className="block min-h-11 w-full border-t border-border-strong bg-surface px-3 py-3 text-center text-xs font-semibold text-muted-strong hover:text-foreground"
           onClick={reopenChoices}
         >
           Privacy choices

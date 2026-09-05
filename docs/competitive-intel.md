@@ -244,3 +244,9 @@ All sources were accessed on 2026-08-23.
 - Avoid comparison tables with unchecked red crosses. Use "documented," "not documented in reviewed sources," and dates.
 - A live QuickBooks, Xero, Stripe, or banking integration creates separate API, platform-term, security, consent, data-retention, and trademark obligations. Review those before marketing a connector.
 - Refresh this report before launch, before publishing competitor pages, and at least quarterly while Intuit's accountant-product transition and Xero's announced pricing change are active.
+
+## September 4, 2026 positioning refresh
+
+Rechecked the official [QuickBooks matching help](https://quickbooks.intuit.com/learn-support/en-us/help-article/bank-feeds/match-online-bank-transactions-quickbooks-online/L6qyw0PvP_US_en_US) and [Xero reconciliation page](https://www.xero.com/us/accounting-software/reconcile-bank-transactions/). Both already offer native matching workflows. Do not market generic payment matching as unique, or replace an adequate native workflow merely to add another subscription.
+
+The implementation focuses on mixed-source CSV/XLSX exports, bookkeeper client separation, explainable exceptions, and a no-signup sample. This narrower positioning is an inference to validate with pilots. No competitor pricing comparison or performance claim was newly published. No customer demand, testimonials, market share, or conversion lift has been invented.

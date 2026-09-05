@@ -184,7 +184,7 @@ export function NarratedDemo() {
               <span className="text-xs text-[#66736d]">April reconciliation</span>
             </div>
             <div className="flex items-center gap-2">
-              <Button variant="secondary" size="sm" onClick={() => setMuted((value) => !value)} aria-label={muted ? "Enable narration" : "Mute narration"}>
+              <Button variant="secondary" size="sm" onClick={() => setMuted((value) => !value)} aria-label={muted ? "Narration off: enable narration" : "Narration on: mute narration"}>
                 {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
                 {muted ? "Narration off" : "Narration on"}
               </Button>
@@ -202,7 +202,7 @@ export function NarratedDemo() {
           <audio
             key={scenario.audio}
             ref={audioRef}
-            preload="metadata"
+            preload="none"
             src={scenario.audio}
             muted={muted}
             onPlay={() => setPlaying(true)}

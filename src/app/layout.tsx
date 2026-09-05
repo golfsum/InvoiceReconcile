@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     template: "%s | InvoiceReconcile",
   },
   description:
-    "Match bank deposits and incoming payments to open invoices, including combined payments, partials, and discrepancies. Review only the exceptions.",
+    "Match CSV and XLSX payments to open invoices, including combined payments, partials, and fees. Review the evidence, confirm matches, and export results.",
   applicationName: siteConfig.name,
   alternates: { canonical: "/" },
   openGraph: {
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     siteName: siteConfig.name,
     title: "Stop matching invoice payments by hand.",
     description:
-      "Import invoices and incoming payments. Find responsible matches and review only the exceptions.",
+      "Import invoice and payment exports. Investigate exceptions, confirm matches, and keep a reviewable record.",
     url: "/",
   },
   twitter: {
