@@ -7,6 +7,8 @@ import { siteConfig } from "@/lib/config";
 
 export function ResourceArticlePage({ article }: { article: ResourceArticle }) {
   const url = new URL(`/resources/${article.slug}`, siteConfig.url).toString();
+  const imageUrl = new URL("/opengraph-image", siteConfig.url).toString();
+  const logoUrl = new URL("/icon.svg", siteConfig.url).toString();
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -15,8 +17,14 @@ export function ResourceArticlePage({ article }: { article: ResourceArticle }) {
     datePublished: article.published || article.updated,
     dateModified: article.updated,
     mainEntityOfPage: url,
+    image: imageUrl,
     author: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url },
-    publisher: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url },
+    publisher: {
+      "@type": "Organization",
+      name: siteConfig.name,
+      url: siteConfig.url,
+      logo: { "@type": "ImageObject", url: logoUrl },
+    },
   };
   const breadcrumbSchema = {
     "@context": "https://schema.org",
