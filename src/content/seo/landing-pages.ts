@@ -485,11 +485,11 @@ export const landingPages: Record<string, SeoPage> = {
   },
   "excel-invoice-reconciliation": {
     slug: "excel-invoice-reconciliation",
-    title: "Invoice reconciliation in Excel and when to move beyond it",
-    metaTitle: "Invoice Reconciliation in Excel | Guide and Templates",
-    description: "Build a controlled Excel invoice reconciliation process, then identify when matching software can reduce exception work.",
+    title: "Invoice reconciliation in Excel: free samples and a worked example",
+    metaTitle: "Invoice Reconciliation in Excel: Free Samples & Example",
+    description: "Match customer payments to invoices in Excel with free CSV samples and a worked example for combined payments, partial payments, and differences.",
     eyebrow: "Excel reconciliation",
-    intro: "Excel is a reasonable starting point for small, stable reconciliation volumes. The risk appears when manual lookups, copied formulas, changing exports, and multi-invoice deposits turn one workbook into an undocumented operating system.",
+    intro: "Invoice reconciliation checks which customer payments settle which invoices, then keeps anything unpaid or unexplained visible. Excel is a reasonable starting point for small, stable volumes. The risk appears when manual lookups, copied formulas, changing exports, and multi-invoice deposits turn one workbook into an undocumented operating system.",
     audience: "Teams currently comparing open invoice exports and bank transactions in Excel or CSV files.",
     example: {
       label: "Lookup cannot explain a lump sum",
@@ -519,6 +519,13 @@ export const landingPages: Record<string, SeoPage> = {
         paragraphs: [
           "Consider a dedicated workflow when multiple people edit the workbook, imports change every month, grouped payments are common, files span several clients, or reviewers cannot reconstruct who confirmed a match. The goal is not to ban spreadsheets. It is to stop asking one workbook to provide import validation, matching logic, collaboration, and audit history at once.",
           "InvoiceReconcile accepts CSV and XLSX files so the transition can start with current exports rather than a required accounting integration.",
+        ],
+      },
+      {
+        heading: "Review a difference instead of hiding it",
+        paragraphs: [
+          "Three open balances of $1,500, $1,225, and $2,000 total $4,725. A payment of $4,725 is a candidate combined match, but payer and remittance evidence still need review before allocation.",
+          "If the deposit is $4,690, the $35 difference should remain visible until supporting evidence explains whether it is a fee, short payment, credit, or the wrong invoice set. Do not silently write it off. InvoiceReconcile suggests relationships for review; it does not automatically post accounting decisions back to a ledger.",
         ],
       },
     ],
