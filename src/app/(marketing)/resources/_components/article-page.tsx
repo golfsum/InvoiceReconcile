@@ -18,7 +18,7 @@ export function ResourceArticlePage({ article }: { article: ResourceArticle }) {
     dateModified: article.updated,
     mainEntityOfPage: url,
     image: imageUrl,
-    author: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url },
+    author: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url, logo: { "@type": "ImageObject", url: logoUrl } },
     publisher: {
       "@type": "Organization",
       name: siteConfig.name,
