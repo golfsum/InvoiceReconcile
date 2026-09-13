@@ -14,7 +14,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug } = await params;
   const article = resourceBySlug[slug];
   if (!article) return {};
-  return canonicalMetadata(`${article.title} | InvoiceReconcile`, article.description, `/resources/${slug}`);
+  const searchTitles: Record<string, string> = {
+    "accounts-receivable-reconciliation-explained": "Accounts Receivable Reconciliation Guide",
+    "cash-application-explained-for-small-businesses": "Cash Application: Process & Examples",
+  };
+  const title = searchTitles[slug] ?? article.title;
+  return canonicalMetadata(`${title} | InvoiceReconcile`, article.description, `/resources/${slug}`);
 }
 
 export default async function ResourcePage({ params }: { params: Promise<{ slug: string }> }) {
